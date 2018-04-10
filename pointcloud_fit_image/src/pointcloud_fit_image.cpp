@@ -12,7 +12,7 @@
 
 #include <pcl/console/time.h>
 
-#include "dbscan.h"
+#include "../include/dbscan.h"
 
 DBSCAN *db;
 
