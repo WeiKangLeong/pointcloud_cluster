@@ -263,7 +263,7 @@ public:
 
                     double sea_level = floor_->at(m_pos)->at(n_pos);
 
-                    if (_cloud_in->points[cnt].z>(sea_level+0.5) && _cloud_in->points[cnt].z<2.0)
+                    if (_cloud_in->points[cnt].z>(sea_level+0.1) && _cloud_in->points[cnt].z<2.5)
                     {
                         c++;
                         grid_num_->at(m_pos)->at(n_pos)->insert(grid_num_->at(m_pos)->at(n_pos)->end(),cnt);
