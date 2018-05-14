@@ -58,7 +58,7 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
         }
     }
 
-	std::cout<<"1: "<<cloud_size<<" "<<input->data.size()<<" "<<cloud_comeout->size()<<std::endl;
+	std::cout<<cloud_size<<" "<<input->data.size()<<" "<<cloud_comeout->size()<<std::endl;
 
     tf::StampedTransform latest_imu_transform;
     try{
@@ -77,7 +77,7 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
     pcl_ros::transformPointCloud(*cloud_comeout, *cloud_in, latest_imu_transform);
 
-	std::cout<<"2: "<<cloud_comeout->size()<<" "<<cloud_in->size()<<std::endl;
+	std::cout<<cloud_comeout->size()<<" "<<cloud_in->size()<<std::endl;
 
     grid_map_->filter_roadXY(cloud_in);
 
@@ -125,7 +125,7 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
             output2.fields = input->fields;
         pub_move.publish (output2);
 
-            std::cout<<"3: "<<input->data.size()<<" "<<output2.data.size()<<std::endl;
+            std::cout<<input->data.size()<<" "<<output2.data.size()<<std::endl;
 
     //    sensor_msgs::PointCloud2 output4;
     //    pcl::toROSMsg (*cloud_left_over, output4);
