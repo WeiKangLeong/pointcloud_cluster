@@ -67,7 +67,7 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     pcl_ros::transformPointCloud(*cloud_filtered, *cloud_left_over, inverse_transform);
 
 
-    std::cout<<"cloud size: "<<cloud_in->size()<<" to "<<cloud_filtered->size()<<std::endl;
+    //std::cout<<"cloud size: "<<cloud_in->size()<<" to "<<cloud_filtered->size()<<std::endl;
 
 	sensor_msgs::PointCloud2 output3;
 	pcl::toROSMsg (*cloud_filtered, output3);
@@ -77,7 +77,15 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     sensor_msgs::PointCloud2 output2;
     pcl::toROSMsg (*cloud_left_over, output2);
     output2.header.frame_id = "rslidar";
+	//output2.width = 2028;
+	output2.height = 1;
+	output2.width = output2.data.size()/32;
+	output2.point_step = 32;
+	output2.row_step = output2.width;
+	//output2.fields = input->fields;
     pub_move.publish (output2);
+
+	std::cout<<input->data.size()<<" "<<output2.data.size()<<std::endl;
 
 //    sensor_msgs::PointCloud2 output4;
 //    pcl::toROSMsg (*cloud_left_over, output4);
@@ -88,7 +96,7 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     cloud_filtered.reset(new pcl::PointCloud<pcl::PointXYZI>);
     cloud_left_over.reset(new pcl::PointCloud<pcl::PointXYZI>);
 
-    std::cout<<"Time used: "<<time.toc()<<std::endl;
+    //std::cout<<"Time used: "<<time.toc()<<std::endl;
 
 }
 
