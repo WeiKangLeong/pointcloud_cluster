@@ -15,7 +15,7 @@ ros::Publisher odom_pub;
 
 void odom_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr odom_msg)
 {
-	//std::cout<<odom_msg->pose.pose.position.x<<" "<< odom_msg->pose.pose.position.y<<std::endl;
+	std::cout<<odom_msg->pose.pose.position.x<<" "<< odom_msg->pose.pose.position.y<<std::endl;
     tf::Transform odom_transform;
 
     tf::Quaternion orient;

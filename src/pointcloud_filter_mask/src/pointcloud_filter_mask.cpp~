@@ -77,8 +77,6 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     sensor_msgs::PointCloud2 output2;
     pcl::toROSMsg (*cloud_left_over, output2);
     output2.header.frame_id = "rslidar";
-	output2.width = 2028;
-	output2.height = 32;
     pub_move.publish (output2);
 
 //    sensor_msgs::PointCloud2 output4;
