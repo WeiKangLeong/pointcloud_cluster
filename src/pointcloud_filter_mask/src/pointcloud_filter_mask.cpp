@@ -7,10 +7,14 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/pcl_macros.h>
 
 #include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
 
 #include "../../../include/grid.h"
+
+#include <math.h>
 
 #define RES 0.5
 #define RANGE_X 800.0
@@ -40,6 +44,20 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
     pcl::fromROSMsg (*input, *cloud_comeout);
 
+    int cloud_size = input->height * input->width;
+
+    const float bad_point = std::numeric_limits<float>::quiet_NaN();
+    pcl::PointXYZI no_point;
+    no_point.x = no_point.y = no_point.z = bad_point;
+
+    for (int i=0; i<cloud_comeout->size(); i++)
+    {
+        if (!std::isnan(cloud_comeout->points[i].x))
+        {
+            cloud_comeout->points[i].intensity = i;
+        }
+    }
+
     tf::StampedTransform latest_imu_transform;
     try{
         tf_listener_->lookupTransform("wtf_odom", "wtf_base_link",
@@ -54,9 +72,8 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 //    double current_amcl_x = (double)amcl_position.x();
 //    double current_amcl_y = (double)amcl_position.y();
 
-    pcl_ros::transformPointCloud(*cloud_comeout, *cloud_in, latest_imu_transform);
 
-    
+    pcl_ros::transformPointCloud(*cloud_comeout, *cloud_in, latest_imu_transform);
 
     grid_map_->filter_roadXY(cloud_in);
 
@@ -67,30 +84,50 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     pcl_ros::transformPointCloud(*cloud_filtered, *cloud_left_over, inverse_transform);
 
 
-    //std::cout<<"cloud size: "<<cloud_in->size()<<" to "<<cloud_filtered->size()<<std::endl;
+    std::cout<<"cloud size: "<<cloud_in->size()<<" to "<<cloud_filtered->size()<<std::endl;
 
+    if (cloud_filtered->size()>0)
+    {
 	sensor_msgs::PointCloud2 output3;
 	pcl::toROSMsg (*cloud_filtered, output3);
 	output3.header.frame_id = "map";
 	pub_static.publish (output3);
 
-    sensor_msgs::PointCloud2 output2;
-    pcl::toROSMsg (*cloud_left_over, output2);
-    output2.header.frame_id = "rslidar";
-	//output2.width = 2028;
-	output2.height = 32;
-	output2.width = output2.data.size()/32;
-	output2.point_step = 1;
-	output2.row_step = output2.width;
-	//output2.fields = input->fields;
-    pub_move.publish (output2);
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_rs (new pcl::PointCloud<pcl::PointXYZI>);
+        //cloud_rs.height = input->height;
+        //cloud_rs.width = input->width;
+        //cloud_rs.is_dense = input->is_dense;
+        int valid = 0;
+        for (int j=0; j<cloud_size; j++)
+        {
+            if (cloud_left_over->points[valid].intensity==j)
+            {
+                cloud_rs->push_back(cloud_left_over->points[valid]);
+            }
+            else
+            {
+                cloud_rs->push_back(no_point);
+            }
+        }
 
-	std::cout<<input->data.size()<<" "<<output2.data.size()<<std::endl;
+        sensor_msgs::PointCloud2 output2;
+        pcl::toROSMsg (*cloud_left_over, output2);
+        output2.header.frame_id = "rslidar";
+            output2.width = input->width;
+            output2.height = input->height;
+    //	output2.width = output2.data.size()/32;
+            output2.point_step = input->point_step;
+            output2.row_step = input->row_step;
+            output2.fields = input->fields;
+        pub_move.publish (output2);
 
-//    sensor_msgs::PointCloud2 output4;
-//    pcl::toROSMsg (*cloud_left_over, output4);
-//    output4.header.frame_id = "map";
-//    pub_cluster.publish (output4);
+            std::cout<<input->data.size()<<" "<<output2.data.size()<<std::endl;
+
+    //    sensor_msgs::PointCloud2 output4;
+    //    pcl::toROSMsg (*cloud_left_over, output4);
+    //    output4.header.frame_id = "map";
+    //    pub_cluster.publish (output4);
+    }
 
     grid_map_->ClearGrid();
     cloud_filtered.reset(new pcl::PointCloud<pcl::PointXYZI>);
