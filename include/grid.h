@@ -274,7 +274,7 @@ public:
             }
 
         }
-        std::cout<<c<<std::endl;
+        //std::cout<<c<<std::endl;
     }
 
     std::vector<int>* find_lowest_indices(pcl::PointCloud<PointType2>::Ptr point_in)
