@@ -1,0 +1,14 @@
+<launch>
+
+    <node pkg="pointcloud_fit_image" type="camera_info_publisher" name="camera_information" />
+
+    <node pkg="image_proc" type="image_proc" name="image_proc" >
+        <remap from="image_raw" to="camera/image_raw" />
+    </node>
+
+    <node pkg="pointcloud_fit_image" type="undistort_image" name="undistort_image" output="screen">
+        <remap from="image" to="/image_color" />
+    </node>
+
+
+</launch>
