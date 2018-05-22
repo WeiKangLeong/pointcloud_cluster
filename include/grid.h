@@ -263,7 +263,8 @@ public:
 
                     double sea_level = floor_->at(m_pos)->at(n_pos);
 
-                    if (_cloud_in->points[cnt].z>(sea_level+0.1) && _cloud_in->points[cnt].z<2.5)
+                    if (_cloud_in->points[cnt].z>(sea_level+0.05) && _cloud_in->points[cnt].z<2.5)
+		    //if ( _cloud_in->points[cnt].z<2.5)
                     {
                         c++;
                         grid_num_->at(m_pos)->at(n_pos)->insert(grid_num_->at(m_pos)->at(n_pos)->end(),cnt);
@@ -273,7 +274,7 @@ public:
             }
 
         }
-        std::cout<<c<<std::endl;
+        //std::cout<<c<<std::endl;
     }
 
     std::vector<int>* find_lowest_indices(pcl::PointCloud<PointType2>::Ptr point_in)
