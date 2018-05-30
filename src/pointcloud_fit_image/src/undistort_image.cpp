@@ -134,10 +134,10 @@ void receive_image_cb(const sensor_msgs::ImagePtr& img)
         //std::cout<<i<<" ";
         undistort.data[3*ind_->at(i)] = uint8_t(a1_->at(i)*img->data[3*ind1_->at(i)] + a2_->at(i)*img->data[3*ind2_->at(i)]
                 + a3_->at(i)*img->data[3*ind3_->at(i)] + a4_->at(i)*img->data[3*ind4_->at(i)]);
-        undistort.data[3*ind_->at(i)+1] = uint8_t(a1_->at(i)*double(img->data[3*ind1_->at(i)+1]) + a2_->at(i)*double(img->data[3*ind2_->at(i)+1])
-                + a3_->at(i)*double(img->data[3*ind3_->at(i)+1]) + a4_->at(i)*double(img->data[3*ind4_->at(i)+1]));
-        undistort.data[3*ind_->at(i)+2] = uint8_t(a1_->at(i)*double(img->data[3*ind1_->at(i)+2]) + a2_->at(i)*double(img->data[3*ind2_->at(i)+2])
-                + a3_->at(i)*double(img->data[3*ind3_->at(i)+2]) + a4_->at(i)*double(img->data[3*ind4_->at(i)+2]));
+        undistort.data[3*ind_->at(i)+1] = uint8_t(a1_->at(i)*img->data[3*ind1_->at(i)+1] + a2_->at(i)*img->data[3*ind2_->at(i)+1]
+                + a3_->at(i)*img->data[3*ind3_->at(i)+1] + a4_->at(i)*img->data[3*ind4_->at(i)+1]);
+        undistort.data[3*ind_->at(i)+2] = uint8_t(a1_->at(i)*img->data[3*ind1_->at(i)+2] + a2_->at(i)*img->data[3*ind2_->at(i)+2]
+                + a3_->at(i)*img->data[3*ind3_->at(i)+2] + a4_->at(i)*img->data[3*ind4_->at(i)+2]);
         //std::cout<<undistort.data[i]<<" "<<std::endl;
     }
 
@@ -189,8 +189,8 @@ main (int argc, char** argv)
   int old_index;
   double value;
 
-  calibrate_a1234.open("/home/smaug/Downloads/calib_example/calibrate_image/a1234.txt", std::ios::app);
-  calibrate_index.open("/home/smaug/Downloads/calib_example/calibrate_image/new_ind.txt", std::ios::app);
+  calibrate_a1234.open("/home/weikang/calibration_pointgrey/a1234.txt", std::ios::app);
+  calibrate_index.open("/home/weikang/calibration_pointgrey/new_ind.txt", std::ios::app);
   if (calibrate_a1234.is_open()){
       std::cout << "a1234 is open."<<std::endl;
       while(calibrate_a1234 >> value)

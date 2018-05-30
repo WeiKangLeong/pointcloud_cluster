@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pointcloud_filter_mask)
+project(pointcloud_filter)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -142,6 +142,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(pointcloud_filter_mask src/pointcloud_filter_mask.cpp)
+add_executable(pointcloud_filter_box src/pointcloud_filter_box.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -155,5 +156,6 @@ add_executable(pointcloud_filter_mask src/pointcloud_filter_mask.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(pointcloud_filter_mask ${catkin_LIBRARIES})
+target_link_libraries(pointcloud_filter_box ${catkin_LIBRARIES})
 
 

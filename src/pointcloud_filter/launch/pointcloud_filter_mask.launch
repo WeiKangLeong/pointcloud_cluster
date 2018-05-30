@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 
 <launch>
-  <node  name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find pointcloud_filter_mask)/mask/mask_map.yaml">
+  <node  name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find pointcloud_filter)/mask/mask_map.yaml">
     <remap from="/map" to="/map_mask"/>
   </node>
 
   <node  name="transform_publisher" pkg="pointcloud_transform" type="transform_publisher" output="screen" />
 
-  <node  name="mask_filter" pkg="pointcloud_filter_mask" type="pointcloud_filter_mask" output="screen">
+  <node  name="mask_filter" pkg="pointcloud_filter" type="pointcloud_filter_mask" output="screen">
     <remap from="origin_input" to="/rslidar_points"/>
   </node>
   
