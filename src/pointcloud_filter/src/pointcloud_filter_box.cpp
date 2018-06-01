@@ -21,7 +21,7 @@ ros::Publisher pub_floor, pub_static, pub_move;
 
 tf::TransformListener *tf_listener_;
 
-Eigen::Matrix3d intrinsic_;
+Eigen::Vector3d intrinsic_1_, intrinsic_2_, intrinsic_3_;
 
 std::vector<std::vector<int>* >* floor_in_grid_;
 
@@ -74,6 +74,8 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     pcl::PointXYZRGB point_project;
     int count=0;
 
+    Eigen::Vector3d point_vector, after_project;
+
     for (int i=0; i<cloud_size; i++)
     {
         int group = cloud_color->points[i].r*1000000+cloud_color->points[i].g*1000+cloud_color->points[i].b;
@@ -81,6 +83,10 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
         point_left.x=cloud_color->points[i].x;
         point_left.y=cloud_color->points[i].y;
         point_left.z=cloud_color->points[i].z;
+
+        Eigen::Vector3d point_vector(point_left.x, point_left.y, point_left.z);
+        //after_project = point_vector.cross(intrinsic_);
+
         if (group==prev_group)
         {
 
@@ -94,9 +100,9 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
         }
         point_left.intensity=count;
         cloud_left_over->push_back(point_left);
-        point_project.x = point_left.x;
-        point_project.y = point_left.y;
-        point_project.z = point_left.z;
+        point_project.x = point_vector.dot(intrinsic_1_);
+        point_project.y = point_vector.dot(intrinsic_2_);
+        point_project.z = point_vector.dot(intrinsic_3_);;
 
         point_project.r = cloud_color->points[i].r;
         point_project.g = cloud_color->points[i].g;
@@ -131,7 +137,13 @@ int main (int argc, char** argv)
     pub_static = nh.advertise<sensor_msgs::PointCloud2> ("/cloud_out", 1);
     //pub_cluster = nh.advertise<sensor_msgs::PointCloud2> ("/cloud_left", 1);
 
-    intrinsic_ << 484.538, 0.0, 371.507, 0.0, 484.798, 184.8, 0.0, 0.0, 1.0;
+    Eigen::Vector3d temp_intr1(484.538, 0.0, 371.507);
+    Eigen::Vector3d temp_intr2(0.0, 484.798, 184.8);
+    Eigen::Vector3d temp_intr3(0.0, 0.0, 1.0);
+    //intrinsic_ << 484.538, 0.0, 371.507, 0.0, 484.798, 184.8, 0.0, 0.0, 1.0;
+    intrinsic_1_ = temp_intr1;
+    intrinsic_2_ = temp_intr2;
+    intrinsic_3_ = temp_intr3;
 
 
     ros::spin ();
