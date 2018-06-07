@@ -23,7 +23,7 @@ tf::TransformListener *tf_listener_;
 
 Eigen::Vector3d intrinsic_1_, intrinsic_2_, intrinsic_3_;
 
-std::vector<std::vector<int>* >* floor_in_grid_;
+std::vector<std::vector<double>* >* box_points;
 
 pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_comeout(new pcl::PointCloud<pcl::PointXYZI>);
 pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZI>);
@@ -36,21 +36,30 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_on_image(new pcl::PointCloud<pcl::P
 
 pcl::PassThrough<pcl::PointXYZRGB> pass;
 
-/*void box_cb(const visualization_msgs::MarkerArrayConstPtr& markers_array)
+void box_cb(const visualization_msgs::MarkerConstPtr& markers_array)
 {
+    std::cout<<markers_array->id<<" and "<<markers_array->points.size()<<std::endl;
+    std::vector<double>* corner_points = new std::vector<double>;
 
-    int markers_size = markers_array->markers.size() - 1;
-    std::cout<<"Marker array size: "<<markers_size<<std::endl;
-//    if (markers_array->at(markers_size).points.size()>0)
-//    {
-//        markers_array->at(markers_size).
-//    }
-    for (int i=0; i<markers_size; i++)
+    if ((markers_array->id)*4 == markers_array->points.size())
     {
-        std::cout<<"point size: "<<markers_array->markers.at(i).points.size()<<std::endl;
+        corner_points->resize(markers_array->points.size());
+        for (int i=0; i<markers_array->id; i++)
+        {
+            double left_corner_x = markers_array->points[4*i].x;
+            double left_corner_y = markers_array->points[4*i].y;
+            corner_points->push_back(left_corner_x);
+            corner_points->push_back(left_corner_y);
+            double right_corner_x = markers_array->points[4*i+2].x;
+            double right_corner_y = markers_array->points[4*i+2].y;
+            corner_points->push_back(right_corner_x);
+            corner_points->push_back(right_corner_y);
+            box_points->push_back(corner_points);
+            corner_points->clear();
+        }
     }
 
-}*/
+}
 
 void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 {
@@ -132,6 +141,7 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
     cloud_on_image->clear();
     cloud_left_over->clear();
+    box_points->clear();
 
     std::cout<<"time taken: "<<time.toc()<<std::endl;
 
@@ -146,7 +156,7 @@ int main (int argc, char** argv)
 
     tf_listener_ = new tf::TransformListener();
 
-    //ros::Subscriber sub_box = nh.subscribe<visualization_msgs::MarkerArray> ("/percept_info", 1, box_cb);
+    ros::Subscriber sub_box = nh.subscribe<visualization_msgs::Marker> ("/box", 1, box_cb);
     ros::Subscriber sub_cloud = nh.subscribe<sensor_msgs::PointCloud2> ("/cluster", 1, pointcloud_cb);
 
     pub_move = nh.advertise<sensor_msgs::PointCloud2> ("/cloud_move", 1);
@@ -162,6 +172,7 @@ int main (int argc, char** argv)
     intrinsic_2_ = temp_intr2;
     intrinsic_3_ = temp_intr3;
 
+    box_points = new std::vector<std::vector<double>* >;
 
     ros::spin ();
 }
