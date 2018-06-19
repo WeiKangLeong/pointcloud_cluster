@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   cv_bridge
   image_transport
+  message_filters
 )
 
 find_package(OpenCV REQUIRED)
@@ -116,7 +117,7 @@ find_package(OpenCV REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES pointcloud_filter_mask
-  CATKIN_DEPENDS geometry_msgs nav_msgs pcl_conversions pcl_ros roscpp rospy sensor_msgs std_msgs tf tf_conversions visualization_msgs cv_bridge image_transport
+  CATKIN_DEPENDS geometry_msgs nav_msgs pcl_conversions pcl_ros roscpp rospy sensor_msgs std_msgs tf tf_conversions visualization_msgs cv_bridge image_transport message_filters
   DEPENDS OpenCV
 #  DEPENDS system_lib
 )
