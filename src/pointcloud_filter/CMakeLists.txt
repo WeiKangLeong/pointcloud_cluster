@@ -19,8 +19,11 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   tf_conversions
   visualization_msgs
+  cv_bridge
+  image_transport
 )
 
+find_package(OpenCV REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -113,7 +116,8 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES pointcloud_filter_mask
-#  CATKIN_DEPENDS geometry_msgs nav_msgs pcl_conversions pcl_ros roscpp rospy sensor_msgs std_msgs tf tf_conversions visualization_msgs
+  CATKIN_DEPENDS geometry_msgs nav_msgs pcl_conversions pcl_ros roscpp rospy sensor_msgs std_msgs tf tf_conversions visualization_msgs cv_bridge image_transport
+  DEPENDS OpenCV
 #  DEPENDS system_lib
 )
 
@@ -125,7 +129,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
  include
-  ${catkin_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -144,6 +148,7 @@ include_directories(
 add_executable(pointcloud_filter_mask src/pointcloud_filter_mask.cpp)
 add_executable(pointcloud_filter_box src/pointcloud_filter_box.cpp)
 add_executable(pointcloud_filter_road src/pointcloud_filter_road.cpp)
+add_executable(pointcloud_filter_color_box src/pointcloud_filter_color_box.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -157,7 +162,7 @@ add_executable(pointcloud_filter_road src/pointcloud_filter_road.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(pointcloud_filter_mask ${catkin_LIBRARIES})
-target_link_libraries(pointcloud_filter_box ${catkin_LIBRARIES})
+target_link_libraries(pointcloud_filter_box ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 target_link_libraries(pointcloud_filter_road ${catkin_LIBRARIES})
-
+target_link_libraries(pointcloud_filter_color_box ${catkin_LIBRARIES})
 

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node pkg="pointcloud_filter" type="pointcloud_filter_road" name="road_filter">
+    <remap from="cloud_input" to="rslidar_points" />
+  </node>
+
+  <node pkg="pointcloud_filter" type="pointcloud_filter_box" name="box_filter" output="screen">
+    <remap from="cluster" to="/object_on_road" />
+    <remap from="box" to="/box" />
+    
+  </node>
+  
+
+</launch>

@@ -313,6 +313,7 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         //std::cout<<"Road plane: "<<cloud_lowest_mapped->size()<< " object cloud: "<<cloud_f->size()<<std::endl;
         sensor_msgs::PointCloud2 output2;
         pcl::toROSMsg (*cloud_f, output2);
+        output2.header = input->header;
         output2.header.frame_id = "map";
         pub_object.publish (output2);
 
