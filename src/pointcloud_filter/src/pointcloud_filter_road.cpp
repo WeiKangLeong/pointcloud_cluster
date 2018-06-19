@@ -105,7 +105,7 @@ void find_a_plane()
    c = bb;
     d = -(a*centroid.x + b*centroid.y + c*centroid.z);
     norm = sqrt(a*a + b*b + c*c);
-    std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<norm<<std::endl;
+    //std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<norm<<std::endl;
     int outlier=0;
     double distance = 0.0;
     for (int ddd=0; ddd<cloud_lowest_mapped->size(); ddd++)
@@ -114,7 +114,7 @@ void find_a_plane()
     }
 
     distance = distance/cloud_lowest_mapped->size();
-    std::cout<<"Overall distance: "<<distance<<std::endl;
+    //std::cout<<"Overall distance: "<<distance<<std::endl;
 
     // distance < 0.1 for ransac=0.1
     if (distance<0.1)
@@ -195,7 +195,7 @@ void find_a_plane()
         }
 
         distance = distance/cloud_lowest_mapped->size();
-        std::cout<<"Previous plane overall distance: "<<distance<<std::endl;
+        //std::cout<<"Previous plane overall distance: "<<distance<<std::endl;
     }
 
 }
@@ -324,7 +324,7 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         cloud_in.reset(new pcl::PointCloud<pcl::PointXYZI>);
         filter_road_->clear();
 
-    std::cout<<"Time used: "<<time.toc()<<std::endl;
+    //std::cout<<"Time used: "<<time.toc()<<std::endl;
 
 }
 
