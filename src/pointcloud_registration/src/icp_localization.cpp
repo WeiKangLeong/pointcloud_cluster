@@ -43,9 +43,9 @@ ros::Publisher pub_icp_odom, pub_input_odom, pub_particle_odom, pub_map, pub_ali
 //typedef pcl::PointXYZI PointT;
 //typedef pcl::PointCloud<PointXYZI> PointCloudT;
 
-nav_msgs::Odometry guess_odom, initial_odom, offset_odom, input_odom, particle_odom[5];
+nav_msgs::Odometry guess_odom, initial_odom, offset_odom, input_odom;
 
-double global_roll, global_pitch, global_yaw, r, p, y, particle_probability[5], guess_movement, first_score, second_score,
+double global_roll, global_pitch, global_yaw, r, p, y, first_score, second_score, guess_movement,
         i_r, i_p, i_y, wheel_in_z, diff_p, prev_p;
 
 tf::TransformBroadcaster *tfb;
@@ -122,45 +122,6 @@ Eigen::Matrix4f setTransformMatrix(double a, bool b)
     return(init_guess);
 }
 
-Eigen::Matrix4f self_localize()
-{
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_icp(new pcl::PointCloud<pcl::PointXYZ>);
-    *cloud_icp = *cloud_in;
-    if (start==false)
-        *cloud_previous =*cloud_in;
-    Eigen::Matrix4f guess_orient;
-
-    icp.setInputSource (cloud_previous);
-    icp.setInputTarget (cloud_icp);
-    icp.align (*cloud_previous);
-    guess_orient=icp.getFinalTransformation();
-    tf::Matrix3x3 mat;
-    mat.setValue(guess_orient(0,0),guess_orient(0,1),guess_orient(0,2),guess_orient(1,0),guess_orient(1,1),guess_orient(1,2),
-                 guess_orient(2,0),guess_orient(2,1),guess_orient(2,2));
-    double r1,p1,y1;
-    mat.getRPY (r1,p1,y1);
-//    std::cout<<"x: "<<guess_orient(0,3)<<" y: "<<guess_orient(1,3)<<" z: "<<guess_orient(2,3)<<std::endl;
-//    std::cout<<"r: "<<r1<<" p: "<<p1<<" y: "<<y1<<std::endl;
-//    std::cout<<"score fitness: "<<icp.getFitnessScore()<<std::endl;
-    find_orient=true;
-    return(guess_orient);
-}
-
-double icp_with_score(Eigen::Matrix4f nnn)
-{
-    //std::cout<<"icp with score start..."<<std::endl;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_particle(new pcl::PointCloud<pcl::PointXYZ>);
-    icp.setMaximumIterations (1);
-    icp.setInputSource (filtered_cloud);
-    icp.setInputTarget (cloud_minimap);
-    icp.align (*cloud_particle, nnn);
-
-    //std::cout<<"icp with score end..."<<std::endl;
-
-    return (icp.getFitnessScore());
-}
-
-
 Eigen::Matrix4f localize()
 {
 
@@ -170,20 +131,12 @@ Eigen::Matrix4f localize()
     tf::Transform origin_tf = transform.inverse();
 
     pcl_ros::transformPointCloud (*cloud_minimap, *map_origin, origin_tf);
-//    sensor_msgs::PointCloud2 output3;
-
-//    pcl::toROSMsg (*map_origin, output3);
-//    output3.header.frame_id = "map";
-//    pub_map.publish(output3);
 
     double score;
 
-    Eigen::Matrix4f known_orient,predict_forward, predict_left, predict_right, previous_transform, use_odom, odom_matrix, compare_matrix;
-    //known_orient = self_localize();
+    Eigen::Matrix4f  use_odom, compare_matrix;
     use_odom = setTransformMatrix(0.0, true);
 
-
-    //*cloud_comein = *input;
     icp.setMaximumIterations (5);
     icp.setMaxCorrespondenceDistance(2.0);
     //icp.setTransformationEpsilon (1e-7);
@@ -192,7 +145,6 @@ Eigen::Matrix4f localize()
     icp.align (*cloud_comeout);
     score=icp.getFitnessScore();
     compare_matrix = icp.getFinalTransformation ();
-
 
     second_score = sqrt(compare_matrix(0,3)*compare_matrix(0,3)+compare_matrix(1,3)*compare_matrix(1,3)+compare_matrix(2,3)*compare_matrix(2,3));
 
@@ -247,11 +199,6 @@ Eigen::Matrix4f localize()
 
     prev_diff_pose=difference_pose;
 
-//    sensor_msgs::PointCloud2 output2;
-//    pcl::transformPointCloud (*filtered_cloud, *cloud_return, compare_matrix[1]);
-//    pcl::toROSMsg (*cloud_return, output2);
-//    output2.header.frame_id = "map";
-//    pub_aligned.publish(output2);
     return (compare_matrix);
 }
 
@@ -270,10 +217,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
     {
         offset_transform = latest_odom_transform;
         odom_start=true;
-
     }
-
-
 
     now_odom_transform = offset_transform.inverseTimes(latest_odom_transform);
 
@@ -321,17 +265,12 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         pub_input_odom.publish(input_odom);
         /***--------------------------------******/
 
-
-
         // Defining a rotation matrix and translation vector
         Eigen::Matrix4f transformation_matrix;
         float translation_x, translation_y, translation_z;
         double roll, pitch, yaw;
         now_transform=transform.getOrigin();
         //std::cout<<"x: "<<now_transform.x()<<" y: "<<now_transform.y()<<" z: "<<now_transform.z()<<std::endl;
-
-
-
 
         pass.setInputCloud (cloud_in);
         pass.setFilterFieldName ("x");
@@ -345,7 +284,6 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         //pass.setFilterLimits (-30.0+now_transform.y(), 30.0+now_transform.y());
         pass.setFilterLimits (-30.0, 30.0);
         pass.filter (*cloud_in);
-
 
         // Create the filtering map
 
@@ -379,8 +317,6 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         output_minimap.header.frame_id = "map";
         pub_minimap.publish(output_minimap);
 
-
-
         /***------------reposition z using map info-------------***/
 
         //transform.setOrigin(tf::Vector3(now_transform.x(), now_transform.y(), low+3));
@@ -400,14 +336,11 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         std::cout << "Filtered cloud contains " << cloud_transform->size ()
               << " data points from velodyne point cloud" << std::endl;
 
-
         transformation_matrix = localize();
 
         translation_x = transformation_matrix(0,3);
         translation_y = transformation_matrix(1,3);
         translation_z = transformation_matrix(2,3);
-
-
 
         tf::Matrix3x3 tf3d;
         tf3d.setValue(static_cast<double>(transformation_matrix(0,0)), static_cast<double>(transformation_matrix(0,1)), static_cast<double>(transformation_matrix(0,2)),
@@ -422,7 +355,6 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
         transform2.setOrigin(tf::Vector3(translation_x, translation_y, translation_z));
         transform2.setRotation(tfqt);
-
 
         transform = transform * transform2;
 
@@ -460,11 +392,6 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         std::cout<<"pointcloud callback end... in " << time.toc () << " ms"<<std::endl;
 
         odom_received = false;
-    //}
-
-
-
-
 }
 
 void initial_pose_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& posing)
@@ -490,34 +417,6 @@ void initial_pose_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& p
 
 }
 
-//void odom_cb (const nav_msgs::Odometry::ConstPtr& odom)
-//{
-//    if (odom_start==false)
-//    {
-//        tf::Quaternion offset_rotation;
-//        tf::quaternionMsgToTF(odom->pose.pose.orientation, offset_rotation);
-//        offset_transform.setOrigin(tf::Vector3(odom->pose.pose.position.x,odom->pose.pose.position.y,odom->pose.pose.position.z));
-//        offset_transform.setRotation(offset_rotation.normalize());
-//        odom_start=true;
-//        prev_odom_transform.setOrigin(tf::Vector3(0.0,0.0,0.0));
-//        prev_odom_transform.setRotation(tf::Quaternion(0.0,0.0,0.0,1.0));
-//    }
-
-//    tf::Quaternion new_rotation;
-//    tf::quaternionMsgToTF(odom->pose.pose.orientation, new_rotation);
-//    odom_transform.setOrigin(tf::Vector3(odom->pose.pose.position.x,odom->pose.pose.position.y,odom->pose.pose.position.z));
-//    odom_transform.setRotation(new_rotation.normalize());
-
-//    odom_transform = offset_transform.inverseTimes(odom_transform);
-
-
-
-//    odom_received = true;
-
-
-
-//}
-
 void imu_cb(sensor_msgs::Imu::ConstPtr imu_data)
 {
     tf::Quaternion imu_rotation;
@@ -528,9 +427,6 @@ void imu_cb(sensor_msgs::Imu::ConstPtr imu_data)
 
 }
 
-
-
-
 int main(int argc, char** argv)
 {
 	// Initialize ROS
@@ -538,22 +434,17 @@ int main(int argc, char** argv)
 	ros::NodeHandle nh;
     ros::NodeHandle priv_nh("~");
 
-	//i=0;j=0;k=0;l=0;
 	ROS_INFO("start");
 
-
-
-	// Create a ROS subscriber for the input point cloud
-    //ros::Subscriber input_odom = nh.subscribe<nav_msgs::Odometry> ("odom", 1, odom_cb);
     ros::Subscriber input_pointcloud = nh.subscribe<sensor_msgs::PointCloud2> ("input", 1, pointcloud_cb);
-	ros::Subscriber input_localize = nh.subscribe<geometry_msgs::PoseWithCovarianceStamped> ("/initialpose",1, initial_pose_cb);
+    ros::Subscriber input_localize = nh.subscribe<geometry_msgs::PoseWithCovarianceStamped> ("/initialpose",1, initial_pose_cb);
     ros::Subscriber input_imu = nh.subscribe<sensor_msgs::Imu> ("imu",1, imu_cb);
 
-	// Create a ROS publisher for the output point cloud
+    // Create a ROS publisher for the output point cloud
     pub_icp_odom = nh.advertise<nav_msgs::Odometry> ("icp_odom", 1);
     pub_input_odom = nh.advertise<nav_msgs::Odometry> ("input_odom", 1);
     pub_map = nh.advertise<sensor_msgs::PointCloud2> ("/large_map", 1);
-	pub_minimap = nh.advertise<sensor_msgs::PointCloud2> ("/minimap",1);
+    pub_minimap = nh.advertise<sensor_msgs::PointCloud2> ("/minimap",1);
     pub_aligned = nh.advertise<sensor_msgs::PointCloud2> ("/velo_cloud",1);
     pub_pointcloud = nh.advertise<sensor_msgs::PointCloud2> ("/running_pointcloud",1);
     vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 1);
@@ -573,11 +464,6 @@ int main(int argc, char** argv)
     turn90.setOrigin(tf::Vector3(0,0,0));
     turn90.setRotation(degree90);
 
-//    pcl::io::loadPCDFile("/home/smaug/Desktop/Raw Data/new/utown_big.pcd", *cloud_largemap);
-//    pcl::io::loadPCDFile("/home/smaug/Desktop/Raw Data/loam_map.pcd", *cloud_largemap);
-//    pcl::io::loadPCDFile("/home/smaug/Desktop/Raw Data/map_binary_compressed.pcd", *cloud_largemap);
-//    pcl::io::loadPCDFile("/home/smaug/Desktop/Raw Data/small_loop/small_loop_onenorth.pcd", *cloud_largemap);
-//   pcl::io::loadPCDFile("/home/smaug/Desktop/Raw Data/170830_onenorth/map_voxel_grid.pcd", *cloud_largemap);
     pcl::io::loadPCDFile("/home/smaug/Desktop/Raw Data/utown_3d/utown_clean_zerotwo.pcd", *cloud_largemap);
    //pcl_ros::transformPointCloud (*cloud_largemap, *cloud_largemap, turn90);
 
@@ -593,10 +479,6 @@ int main(int argc, char** argv)
     std::cout << "Filtered map contains " << cloud_largemap->size ()
           << " data points from map" << std::endl;
 
-//    sensor_msgs::PointCloud2 output;
-//    pcl::toROSMsg (*cloud_largemap, output);
-//    output.header.frame_id = "map";
-//    pub_map.publish(output);
     ROS_INFO("map loaded.");
 	// Spin
     ros::spin();
