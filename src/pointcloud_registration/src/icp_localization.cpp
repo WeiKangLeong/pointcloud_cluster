@@ -464,7 +464,7 @@ int main(int argc, char** argv)
     turn90.setOrigin(tf::Vector3(0,0,0));
     turn90.setRotation(degree90);
 
-    pcl::io::loadPCDFile("/home/smaug/Desktop/Raw Data/utown_3d/utown_clean_zerotwo.pcd", *cloud_largemap);
+    pcl::io::loadPCDFile("map/utown_clean_zerotwo.pcd", *cloud_largemap);
    //pcl_ros::transformPointCloud (*cloud_largemap, *cloud_largemap, turn90);
 
 //    voxel_filter.setLeafSize (0.1, 0.1, 0.1);

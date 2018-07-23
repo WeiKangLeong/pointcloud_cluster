@@ -15,8 +15,6 @@
 #include <visualization_msgs/MarkerArray.h>
 
 #include <math.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
 
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -37,6 +35,8 @@ bool image_received, pcl_received;
 double img_time, pcl_time;
 
 std::vector<std::vector<double>* >* box_points;
+std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr >* store_cloud_;
+std::vector<std_msgs::Header> store_header_;
 
 pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_comeout(new pcl::PointCloud<pcl::PointXYZI>);
 pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZI>);
@@ -53,91 +53,7 @@ cv_bridge::CvImagePtr cv_ptr, cv_ptr2;
 
 tf::Transform lidar_to_cam;
 
-void fusioncallback(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::PointCloud2ConstPtr& input)
-{
-    try
-    {
-      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-      ROS_ERROR("cv_bridge exception: %s", e.what());
-      return;
-    }
 
-    pcl::fromROSMsg (*input, *cloud_in);
-
-    int cloud_size = cloud_in->size();
-
-    pass.setInputCloud (cloud_in);
-    pass.setFilterFieldName ("x");
-    pass.setFilterLimits (0.85, 50.0);
-    pass.filter (*cloud_in);
-    pass.setFilterFieldName ("y");
-    pass.setFilterLimits (-25.0, 25.0);
-    pass.filter (*cloud_in);
-
-    pcl_ros::transformPointCloud(*cloud_in, *cloud_color, lidar_to_cam);
-
-    sensor_msgs::PointCloud2 output3;
-    pcl::toROSMsg(*cloud_color, output3);
-    output3.header = input->header;
-    pub_static.publish(output3);
-
-    int count=0;
-
-    std::cout<<"Pointcloud size: "<<cloud_size<<" to: "<<cloud_color->size()<<std::endl;
-    pcl::PointXYZI point_left;
-    pcl::PointXYZI point_project;
-    cloud_on_image->clear();
-    std::cout<<"image receive: "<<image_received<<std::endl;
-
-    for (int i=0; i<cloud_color->size(); i++)
-    {
-        point_left.x=-cloud_color->points[i].y;
-        point_left.y=-cloud_color->points[i].z;
-        point_left.z=cloud_color->points[i].x;
-
-        Eigen::Vector3d point_vector(point_left.x, point_left.y, point_left.z);
-
-
-        point_project.z = point_vector.dot(intrinsic_3_);
-        point_project.x = point_vector.dot(intrinsic_1_)/point_project.z;
-        point_project.y = point_vector.dot(intrinsic_2_)/point_project.z;
-        point_project.z = point_project.z/point_project.z;
-
-
-        if (point_project.x>0.0 && point_project.x<2048.0 && point_project.y>0.0 && point_project.y<1536.0)
-        {
-            point_project.intensity = count;
-            cloud_on_image->push_back(point_project);
-            //std::cout<<"image receive: "<<image_received<<std::endl;
-//            if (image_received)
-//            {
-                cv::circle(cv_ptr->image, cv::Point(point_project.x/2, point_project.y/2), 0.5, CV_RGB(255,0,0));
-//            }
-
-            count++;
-        }
-    }
-
-    sensor_msgs::PointCloud2 output2;
-    pcl::toROSMsg(*cloud_on_image, output2);
-    output2.header = input->header;
-    pub_move.publish(output2);
-
-    //cloud_on_image->clear();
-    cloud_left_over->clear();
-    box_points->clear();
-
-    image_pub.publish(cv_ptr->toImageMsg());
-
-    img_time = msg->header.stamp.toSec();
-    pcl_time = input->header.stamp.toSec();
-
-    double time_diff = img_time-pcl_time;
-    std::cout<<"time diff: "<<time_diff<<std::endl;
-}
 
 void imageCb(const sensor_msgs::ImageConstPtr& msg)
 {
@@ -169,11 +85,17 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
         std::cout<<"published"<<std::endl;
     }
     image_received=true;
+    img_time = msg->header.stamp.toSec();
+
+    std::cout<<"image time: "<<img_time-pcl_time<<std::endl;
 
 }
 
-//void imageCb2(const sensor_msgs::ImageConstPtr& msg)
-//{
+void imageCb2(const sensor_msgs::ImageConstPtr& img)
+{
+    double raw_time = img->header.stamp.toSec();
+
+    std::cout<<"raw time: "<<raw_time-pcl_time<<std::endl;
 //    std::cout<<"taking image"<<std::endl;
 //    try
 //    {
@@ -187,7 +109,7 @@ void imageCb(const sensor_msgs::ImageConstPtr& msg)
 //    std::cout<<"after taking image"<<std::endl;
 //    image_received=true;
 
-//}
+}
 
 void box_cb(const visualization_msgs::MarkerConstPtr& markers_array)
 {
@@ -289,13 +211,14 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 //        image_pub.publish(cv_ptr->toImageMsg());
 //    }
 
-    pcl_time = input->header.stamp.toSec();
 
-    //std::cout<<"pcl difference: "<<pcl_time-img_time<<std::endl;
+    std::cout<<"pcl difference: "<<pcl_time-img_time<<std::endl;
     pcl_received=true;
 
     std::cout<<"time taken: "<<time.toc()<<std::endl;
+    pcl_time = input->header.stamp.toSec();
 
+    std::cout<<"pcl time: "<<pcl_time<<std::endl;
 
 }
 
@@ -308,14 +231,11 @@ int main (int argc, char** argv)
     tf_listener_ = new tf::TransformListener();
 
     ros::Subscriber sub_box = nh.subscribe<visualization_msgs::Marker> ("box", 1, box_cb);
-    //ros::Subscriber sub_cloud = nh.subscribe<sensor_msgs::PointCloud2> ("cluster", 1, pointcloud_cb);
-    //ros::Subscriber sub_image = nh.subscribe<sensor_msgs::Image> ("/iMiev/tf_object_detection", 1, imageCb);
+    ros::Subscriber sub_cloud = nh.subscribe<sensor_msgs::PointCloud2> ("cluster", 1, pointcloud_cb);
+    ros::Subscriber sub_image = nh.subscribe<sensor_msgs::Image> ("/iMiev/tf_object_detection", 1, imageCb);
     //ros::Subscriber sub_image2 = nh.subscribe<sensor_msgs::Image> ("/camera/image_raw", 1, imageCb2);
 
-    message_filters::Subscriber<sensor_msgs::Image> image_sub(nh, "/iMiev/tf_object_detection", 1);
-    message_filters::Subscriber<sensor_msgs::PointCloud2> pcl_sub(nh, "cluster", 1);
-    message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::PointCloud2> sync(image_sub, pcl_sub, 10);
-    sync.registerCallback(boost::bind(&fusioncallback, _1, _2));
+
 
     pub_move = nh.advertise<sensor_msgs::PointCloud2> ("/cloud_move", 1);
     pub_floor = nh.advertise<sensor_msgs::PointCloud2> ("/floor_points", 1);
@@ -337,6 +257,7 @@ int main (int argc, char** argv)
     lidar_to_cam.setRotation(tf::Quaternion(0.0, 0.0, 0.0, 1.0));
 
     box_points = new std::vector<std::vector<double>* >;
+    store_cloud_ = new std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr >;
 
     image_received = false;
 
