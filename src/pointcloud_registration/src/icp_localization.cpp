@@ -7,6 +7,7 @@
 // PCL specific includes
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/Transform.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
@@ -51,7 +52,7 @@ double global_roll, global_pitch, global_yaw, r, p, y, first_score, second_score
 tf::TransformBroadcaster *tfb;
 tf::TransformListener *tf_listener_;
 tf::Transform transform, transform2, transform3, offset_transform, odom_transform, now_odom_transform, prev_odom_transform, diff_odom_transform,
-                turn90, difference, initial_pose, vehicle_pose, imu_transform, previous_transform;
+                turn90, difference, initial_pose, vehicle_pose, imu_transform, previous_transform, latest_tf_;
 tf::Quaternion quater;
 tf::Vector3 difference_pose, wheel_position, now_transform, prev_diff_pose;
 Eigen::Matrix4f second_matrix, Point[10],theOne;
@@ -81,6 +82,7 @@ bool indoor=false;
 
 int danger,chance;
 
+std::string base_frame_id_, global_frame_id_, odom_frame_id_;
 
 void print4x4Matrix (const Eigen::Matrix4f & matrix)
 {
@@ -206,7 +208,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 {
     tf::StampedTransform latest_odom_transform;
     try{
-        tf_listener_->lookupTransform("wtf_odom", "wtf_base_link",
+        tf_listener_->lookupTransform(odom_frame_id_, base_frame_id_,
                                       ros::Time(0), latest_odom_transform);
     }catch (tf::TransformException &ex) {
         ROS_ERROR_STREAM("localizer_scan: Looking Transform Failed");
@@ -261,7 +263,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 //        wheel_in_z = wheel_in_z + sqrt((difference_pose.x()*difference_pose.x())+(difference_pose.y()*difference_pose.y()))*tan(diff_p);
 //        input_odom.pose.pose.position.z = wheel_in_z;
         input_odom.pose.pose.position.z = wheel_position.z();
-        input_odom.header.frame_id = "map";
+        input_odom.header.frame_id = global_frame_id_;
         pub_input_odom.publish(input_odom);
         /***--------------------------------******/
 
@@ -314,7 +316,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 //        }
 
         pcl::toROSMsg (*cloud_minimap, output_minimap);
-        output_minimap.header.frame_id = "map";
+        output_minimap.header.frame_id = global_frame_id_;
         pub_minimap.publish(output_minimap);
 
         /***------------reposition z using map info-------------***/
@@ -371,7 +373,9 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
         std::cout<<"x: "<<new_nav_position.x()<<" y: "<<new_nav_position.y()<<" z: "<<new_nav_position.z()<<std::endl;
         std::cout<<"R: "<<r<<" P: "<<p<<" Y: "<<y<<std::endl;
-        input_odom.header.frame_id = "map";
+        input_odom.header.frame_id = global_frame_id_;
+
+        pub_icp_odom.publish(input_odom);
 
         geometry_msgs::PoseWithCovarianceStamped icp_pose;
         icp_pose.header = input_odom.header;
@@ -379,7 +383,38 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
         pub_localize.publish(icp_pose);
 
-        pub_icp_odom.publish(input_odom);
+
+        geometry_msgs::PoseStamped odom_to_map;
+        try
+        {
+            tf::Quaternion q(icp_pose.pose.pose.orientation.x, icp_pose.pose.pose.orientation.y, icp_pose.pose.pose.orientation.z, icp_pose.pose.pose.orientation.w);
+            tf::Transform tmp_tf(q, tf::Vector3(icp_pose.pose.pose.position.x, icp_pose.pose.pose.position.y, icp_pose.pose.pose.position.z));
+            geometry_msgs::Transform temp_transform;
+            tf::transformTFToMsg (tmp_tf.inverse(), temp_transform);
+            geometry_msgs::PoseStamped tmp_tf_stamped;
+            tmp_tf_stamped.header.frame_id = base_frame_id_;
+            tmp_tf_stamped.header.stamp = input->header.stamp;
+            tmp_tf_stamped.pose.orientation = temp_transform.rotation;
+            tf_listener_->transformPose(odom_frame_id_, tmp_tf_stamped, odom_to_map);
+        }
+        catch(tf::TransformException)
+        {
+            ROS_DEBUG("Failed to subtract base to odom transform");
+            return;
+        }
+
+        latest_tf_ = tf::Transform(tf::Quaternion(odom_to_map.pose.orientation.x, odom_to_map.pose.orientation.y, odom_to_map.pose.orientation.z, odom_to_map.pose.orientation.w),
+                        tf::Vector3(odom_to_map.pose.position.x, odom_to_map.pose.position.y, odom_to_map.pose.position.z));
+        //latest_tf_valid_ = true;
+
+        // We want to send a transform that is good up until a
+        // tolerance time so that odom can be used
+        ros::Time transform_expiration = (input->header.stamp +
+                        ros::Duration(0.1));
+        tf::StampedTransform tmp_tf_stamped(latest_tf_.inverse(),
+                        transform_expiration,
+                        global_frame_id_, odom_frame_id_);
+        tfb->sendTransform(tmp_tf_stamped);
 
         tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, "/wtf_base_link", "/wtf_icp");
         tfb->sendTransform(odom_transform_stamped);
@@ -388,7 +423,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         pcl_ros::transformPointCloud (*cloud_in, *final_cloud, transform);
 
         pcl::toROSMsg (*final_cloud, output2);
-        output2.header.frame_id = "map";
+        output2.header.frame_id = global_frame_id_;
         pub_aligned.publish(output2);
 
         start=true;
@@ -441,6 +476,12 @@ int main(int argc, char** argv)
     ros::NodeHandle priv_nh("~");
 
 	ROS_INFO("start");
+	
+	std::string map_location;
+	priv_nh.getParam("map_location", map_location);
+        priv_nh.getParam("base_frame_id", base_frame_id_);
+        priv_nh.getParam("global_frame_id", global_frame_id_);
+        priv_nh.getParam("odom_frame_id", odom_frame_id_);
 
     ros::Subscriber input_pointcloud = nh.subscribe<sensor_msgs::PointCloud2> ("input", 1, pointcloud_cb);
     ros::Subscriber input_localize = nh.subscribe<geometry_msgs::PoseWithCovarianceStamped> ("/initialpose",1, initial_pose_cb);
@@ -471,7 +512,7 @@ int main(int argc, char** argv)
     turn90.setOrigin(tf::Vector3(0,0,0));
     turn90.setRotation(degree90);
 
-    pcl::io::loadPCDFile("map/utown_clean_zerotwo.pcd", *cloud_largemap);
+    pcl::io::loadPCDFile(map_location, *cloud_largemap);
    //pcl_ros::transformPointCloud (*cloud_largemap, *cloud_largemap, turn90);
 
 //    voxel_filter.setLeafSize (0.1, 0.1, 0.1);
