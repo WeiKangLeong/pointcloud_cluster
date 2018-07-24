@@ -38,7 +38,7 @@
 #include <pcl/console/time.h>   // TicToc
 #include <pcl/common/common.h>
 
-ros::Publisher pub_icp_odom, pub_input_odom, pub_particle_odom, pub_map, pub_aligned, pub_minimap, pub_pointcloud, vis_pub;
+ros::Publisher pub_icp_odom, pub_input_odom, pub_particle_odom, pub_map, pub_aligned, pub_minimap, pub_pointcloud, vis_pub, pub_localize;
 
 //typedef pcl::PointXYZI PointT;
 //typedef pcl::PointCloud<PointXYZI> PointCloudT;
@@ -373,6 +373,12 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         std::cout<<"R: "<<r<<" P: "<<p<<" Y: "<<y<<std::endl;
         input_odom.header.frame_id = "map";
 
+        geometry_msgs::PoseWithCovarianceStamped icp_pose;
+        icp_pose.header = input_odom.header;
+        icp_pose.pose = input_odom.pose;
+
+        pub_localize.publish(icp_pose);
+
         pub_icp_odom.publish(input_odom);
 
         tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, "/wtf_base_link", "/wtf_icp");
@@ -448,6 +454,7 @@ int main(int argc, char** argv)
     pub_aligned = nh.advertise<sensor_msgs::PointCloud2> ("/velo_cloud",1);
     pub_pointcloud = nh.advertise<sensor_msgs::PointCloud2> ("/running_pointcloud",1);
     vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 1);
+    pub_localize = nh.advertise<geometry_msgs::PoseWithCovarianceStamped> ("/icp_pose", 1);
 
     tfb = new tf::TransformBroadcaster();
     tf_listener_ = new tf::TransformListener();
