@@ -315,9 +315,10 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 //            }
 //        }
 
-        pcl::toROSMsg (*cloud_minimap, output_minimap);
+        /*** showing map portion of matching with cloud
+         * pcl::toROSMsg (*cloud_minimap, output_minimap);
         output_minimap.header.frame_id = global_frame_id_;
-        pub_minimap.publish(output_minimap);
+        pub_minimap.publish(output_minimap); ***/
 
         /***------------reposition z using map info-------------***/
 
@@ -332,6 +333,10 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 //        output_running_pointcloud.header.frame_id = "map";
         //pub_pointcloud.publish(output_running_pointcloud);
 
+
+
+        if (location_confirm)
+        {
         voxel_filter.setLeafSize (0.2, 0.2, 0.2);
         voxel_filter.setInputCloud (cloud_in);
         voxel_filter.filter (*cloud_transform);
@@ -418,6 +423,8 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
         tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, "/wtf_base_link", "/wtf_icp");
         tfb->sendTransform(odom_transform_stamped);
+
+        }
 
         sensor_msgs::PointCloud2 output2;
         pcl_ros::transformPointCloud (*cloud_in, *final_cloud, transform);
