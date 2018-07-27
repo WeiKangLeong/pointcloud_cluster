@@ -1,0 +1,5 @@
+<launch>
+	<node pkg="pointcloud_navigation" type="path_reader" name="path_reader" output="screen" >
+		<param name="path_file_name" value="$(find pointcloud_navigation)/path/path.txt" >
+	</node>
+</launch>
