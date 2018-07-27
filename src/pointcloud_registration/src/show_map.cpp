@@ -37,7 +37,11 @@ main (int argc, char** argv)
     priv_nh.getParam("map_location", map_location);
     priv_nh.getParam("global_frame_id", global_frame_id);
 
+    pub = nh.advertise<sensor_msgs::PointCloud2> ("/map_in_total", 1);
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZI>);
+
+    pcl::PassThrough<pcl::PointXYZI> pass;
 
     pcl::io::loadPCDFile(map_location, *cloud_in);
 
@@ -49,7 +53,7 @@ main (int argc, char** argv)
     max_point.y = max_point.y + 1.0;
 
     int sum_size=0;
-
+    std::cout<<cloud_in->size()<<std::endl;
 
     if (cloud_in->size()<400000)
     {
@@ -60,7 +64,7 @@ main (int argc, char** argv)
     }
     else
     {
-        int divide = (cloud_in->size()/10000);
+        int divide = (cloud_in->size()/100000);
         double x_range = max_point.x - min_point.x;
         double y_range = max_point.y - min_point.y;
 
@@ -81,7 +85,7 @@ main (int argc, char** argv)
 
                 sensor_msgs::PointCloud2 output;
                 pcl::toROSMsg (*cloud_large_map, output);
-                output.header.frame_id = "map";
+                output.header.frame_id = global_frame_id;
                 pub.publish (output);
                 sum_size = sum_size+cloud_large_map->size();
             }
@@ -91,6 +95,6 @@ main (int argc, char** argv)
 
     std::cout<<"cloud in size: "<<cloud_in->size()<<" and "<<sum_size<<" points."<<std::endl;
 
-
+    ros::spin();
 }
 

@@ -1,5 +1,6 @@
 <launch>
 	<arg name="map_location" default="$(find pointcloud_registration)/map/utown_clean_zerotwo.pcd" />
+	<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find pointcloud_registration)/icp_localize.rviz" />
 	<node pkg="pointcloud_registration" type="icp_localize" name="icp_localize" output="screen">
 		<param name="map_location" value="$(arg map_location)" />
 		<param name="base_frame_id" value="wheelchair/base_link" />
@@ -8,14 +9,11 @@
 		<remap from="input" to="/wheelchair/velodyne_points" />
 	</node>
 
-	<node pkg="pointcloud_registration" type="show_map" name="show_map" >
-		<param name="map_location" value="$(arg map_location)" />
-		<param name="global_frame_id" value="wheelchair/map" />
-	</node>
+	
 
 	<!--node pkg="pointcloud_transform" type="launch_transform" name="launch_transform" >
 		<remap from="charles_odom" to="/wheelchair/odom" />
 	</node>-->
 
-	<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find pointcloud_registration)/icp_localize.rviz" />
+	
 </launch>

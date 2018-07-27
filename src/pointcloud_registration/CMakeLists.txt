@@ -143,6 +143,8 @@ include_directories(
 
 add_executable (icp_localize src/icp_localization.cpp)
 target_link_libraries(icp_localize ${catkin_LIBRARIES})
+add_executable (show_map src/show_map.cpp)
+target_link_libraries(show_map ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

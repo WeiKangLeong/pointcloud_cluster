@@ -421,7 +421,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
                         global_frame_id_, odom_frame_id_);
         tfb->sendTransform(tmp_tf_stamped);
 
-        tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, "/wtf_base_link", "/wtf_icp");
+        tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, "/wheelchair/map", "/wheelchair/icp_odom");
         tfb->sendTransform(odom_transform_stamped);
 
         }
