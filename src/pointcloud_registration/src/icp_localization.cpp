@@ -388,7 +388,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
         pub_localize.publish(icp_pose);
 
-
+    /*
         geometry_msgs::PoseStamped odom_to_map;
         try
         {
@@ -420,8 +420,8 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
                         transform_expiration,
                         global_frame_id_, odom_frame_id_);
         tfb->sendTransform(tmp_tf_stamped);
-
-        tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, "/wheelchair/map", "/wheelchair/icp_odom");
+        */
+        tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, "wheelchair/map", "wheelchair/base_link");
         tfb->sendTransform(odom_transform_stamped);
 
         }

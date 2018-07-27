@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     pose.header.frame_id = frame_id;
     pose.pose.position.x = x;
     pose.pose.position.y = y;
-    pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, 1);
+    pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, 0);
   }
 
   ros::Publisher path_pub = handle.advertise<nav_msgs::Path>(path_topic, 1, true);
