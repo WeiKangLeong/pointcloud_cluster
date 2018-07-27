@@ -127,6 +127,8 @@ include_directories(
 
 add_executable (path_reader src/static_path_publisher.cpp)
 target_link_libraries (path_reader ${catkin_LIBRARIES})
+add_executable (base_link_publisher src/base_link_publisher.cpp)
+target_link_libraries (base_link_publisher ${catkin_LIBRARIES})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
