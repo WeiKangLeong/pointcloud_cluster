@@ -6,15 +6,33 @@
 #include <ros/console.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 
+using namespace std;
+
 tf::TransformListener *tf_listener_;
 
 tf::StampedTransform offset_transform;
 
 tf::Transform latest_icp, now_odom_transform, prev_odom_transform;
 
-bool icp_localize, odom_start;
+bool icp_localize, odom_start, icp_start;
 
-using namespace std;
+string parent_frame_id, child_frame_id, odom_frame_id;
+
+
+
+tf::StampedTransform catch_odom()
+{
+    tf::StampedTransform latest_transform;
+    latest_transform.setIdentity();
+    try{
+        tf_listener_->lookupTransform(odom_frame_id, child_frame_id,
+                                      ros::Time(0), latest_transform);
+    }catch (tf::TransformException &ex) {
+        ROS_ERROR_STREAM("Odom to baselink Transform Failed");
+
+    }
+    return latest_transform;
+}
 
 void icp_cb(const geometry_msgs::PoseWithCovarianceStamped icp_input)
 {
@@ -24,6 +42,7 @@ void icp_cb(const geometry_msgs::PoseWithCovarianceStamped icp_input)
     tf::quaternionMsgToTF(icp_input.pose.pose.orientation, icp_rotate);
     latest_icp.setRotation(icp_rotate);
     icp_localize=true;
+    icp_start=true;
 }
 
 int main(int argc, char** argv)
@@ -32,7 +51,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "base_link_to_map_publisher");
   ros::NodeHandle nh_private("~");
   ros::NodeHandle nh;
-  string parent_frame_id, child_frame_id, odom_frame_id;
+
   double roll, pitch, yaw, x, y, z, ms;
   nh_private.param("parent_frame_id", parent_frame_id, string("parent_frame"));
   nh_private.param("child_frame_id", child_frame_id, string("child_frame"));
@@ -58,36 +77,33 @@ int main(int argc, char** argv)
   {
       ros::spinOnce();
 
-      if (icp_localize)
+      if (icp_start)
       {
-          transform = tf::StampedTransform(latest_icp, ros::Time::now() + sleeper, parent_frame_id, child_frame_id);
-          broadcaster.sendTransform(transform);
-          icp_localize = false;
-      }
-      else
-      {
-          tf::StampedTransform latest_odom_transform;
-          tf::Transform difference;
-          try{
-              tf_listener_->lookupTransform(odom_frame_id, child_frame_id,
-                                            ros::Time(0), latest_odom_transform);
-          }catch (tf::TransformException &ex) {
-              ROS_ERROR_STREAM("Odom to baselink Transform Failed");
-              //return;
-          }
-
-          if (odom_start==false)
+          if (icp_localize)
           {
-              offset_transform = latest_odom_transform;
-              odom_start=true;
+              transform = tf::StampedTransform(latest_icp, ros::Time::now() + sleeper, parent_frame_id, child_frame_id);
+              broadcaster.sendTransform(transform);
+              icp_localize = false;
           }
+          else
+          {
+              tf::StampedTransform latest_odom_transform;
+              tf::Transform difference;
+              latest_odom_transform = catch_odom();
 
-          now_odom_transform = offset_transform.inverseTimes(latest_odom_transform);
-          difference = prev_odom_transform.inverseTimes(now_odom_transform);
-          latest_icp = latest_icp*difference;
-          transform = tf::StampedTransform(latest_icp, ros::Time::now() + sleeper, parent_frame_id, child_frame_id);
-          broadcaster.sendTransform(transform);
-          prev_odom_transform = now_odom_transform;
+              if (odom_start==false)
+              {
+                  offset_transform = latest_odom_transform;
+                  odom_start=true;
+              }
+
+              now_odom_transform = offset_transform.inverseTimes(latest_odom_transform);
+              difference = prev_odom_transform.inverseTimes(now_odom_transform);
+              latest_icp = latest_icp*difference;
+              transform = tf::StampedTransform(latest_icp, ros::Time::now() + sleeper, parent_frame_id, child_frame_id);
+              broadcaster.sendTransform(transform);
+              prev_odom_transform = now_odom_transform;
+          }
       }
 //    transform.stamp_ = ros::Time::now() + sleeper;
 //    broadcaster.sendTransform(transform);

@@ -9,7 +9,16 @@
 		<remap from="input" to="/wheelchair/velodyne_points" />
 	</node>
 
+	<node pkg="pointcloud_registration" type="show_map" name="show_map" >
+		<param name="map_location" value="$(arg map_location)" />
+		<param name="global_frame_id" value="wheelchair/map" />
+	</node>
 	
+	<node pkg="pointcloud_navigation" type="base_link_publisher"  name="base_link_publisher">
+	    <param name="parent_frame_id" value="wheelchair/map" />
+	    <param name="child_frame_id" value="wheelchair/base_link" />
+	    <param name="odom_frame_id" value="wheelchair/odom" />
+	</node>
 
 	<!--node pkg="pointcloud_transform" type="launch_transform" name="launch_transform" >
 		<remap from="charles_odom" to="/wheelchair/odom" />

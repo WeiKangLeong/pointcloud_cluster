@@ -42,6 +42,8 @@ main (int argc, char** argv)
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZI>);
 
     pcl::PassThrough<pcl::PointXYZI> pass;
+    
+    ros::Duration(5.0).sleep();
 
     pcl::io::loadPCDFile(map_location, *cloud_in);
 
