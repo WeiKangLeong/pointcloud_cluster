@@ -1,0 +1,17 @@
+<launch>
+    <arg name="map_location" default="$(find pointcloud_registration)/map/utown_clean_zerotwo.pcd" />
+	<arg name="file_location" default="$(find pointcloud_registration)/map/kidnap_pose.txt" />
+    <node pkg="pointcloud_registration" type="show_map" name="show_map" >
+		<param name="map_location" value="$(arg map_location)" />
+		<param name="global_frame_id" value="wheelchair/map" />
+	</node>
+
+	<node pkg="pointcloud_registration" type="icp_globalize" name="kidnap" output="screen" >
+		<param name="map_location" value="$(arg map_location)" />
+		<param name="map_location" value="$(arg file_location)" />
+		<param name="base_frame_id" value="wheelchair/base_link" />
+		<param name="odom_frame_id" value="wheelchair/odom" />
+		<param name="global_frame_id" value="wheelchair/map" />
+		<remap from="input" to="/wheelchair/velodyne_points" />	
+	</node>
+</launch>
