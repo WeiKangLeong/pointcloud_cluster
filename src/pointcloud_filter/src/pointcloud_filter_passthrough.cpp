@@ -27,29 +27,18 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
  
 
   // Create the filtering object
-  pcl::PassThrough<pcl::PCLPointCloud2> pass;
+/*  pcl::PassThrough<pcl::PCLPointCloud2> pass;
   pass.setInputCloud (cloud);
-  pass.setFilterFieldName ("x");
-  pass.setFilterLimits (0.0, 100.0);
+  pass.setFilterFieldName ("z");
+  pass.setFilterLimits (0.2, 1.0);
   pass.setFilterLimitsNegative (false);
   pass.filter (*cloud_filtered);
-
-//  //pass.setInputCloud (cloud_filtered);
-//  pass.setFilterFieldName ("y");
-//  pass.setFilterLimits (-1.0, 1.0);
-//  pass.setFilterLimitsNegative (true);
-//  pass.filter (*cloud_filtered);
-
-  pass.setInputCloud (cloud_filtered);
-  pass.setFilterFieldName ("z");
-  pass.setFilterLimits (-3.0, 0.5);
-  pass.setFilterLimitsNegative (false);
-  pass.filter (cloud_filtered_2);
-
+  */
   // Convert to ROS data type
   sensor_msgs::PointCloud2 output;
-  pcl_conversions::fromPCL(cloud_filtered_2, output);
-  //output.header.frame_id = input->header.frame_id;
+  pcl_conversions::fromPCL(*cloud, output);
+  output.header.stamp = input->header.stamp;
+  output.header.frame_id = "iMiev/base_link";
 
   // Publish the data.
   pub.publish (output);
@@ -59,14 +48,14 @@ int
 main (int argc, char** argv)
 {
   // Initialize ROS
-  ros::init (argc, argv, "my_pcl_tutorial");
+  ros::init (argc, argv, "passthrough");
   ros::NodeHandle nh;
 
   // Create a ROS subscriber for the input point cloud
   ros::Subscriber sub = nh.subscribe<sensor_msgs::PointCloud2> ("input", 1, cloud_cb);
 
   // Create a ROS publisher for the output point cloud
-  pub = nh.advertise<sensor_msgs::PointCloud2> ("/new_points", 1);
+  pub = nh.advertise<sensor_msgs::PointCloud2> ("output", 1);
 
   // Spin
   ros::spin ();
