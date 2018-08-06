@@ -178,7 +178,7 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
     map_pose_inverse = map_pose.inverse();
     pcl::PointCloud<pcl::PointXYZ>::Ptr mini_map (new pcl::PointCloud<pcl::PointXYZ>);
     pcl_ros::transformPointCloud (*target, *mini_map, map_pose_inverse);
-    for (int k=0; k<360; k++)
+    for (int k=0; k<72; k++)
     {
         //std::cout<<"now is in degree: "<<k*5<<std::endl;
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_rotate(new pcl::PointCloud<pcl::PointXYZ>);
