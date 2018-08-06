@@ -192,13 +192,14 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
         pcl_ros::transformPointCloud (*source, *cloud_rotate, rotate);
 
         //std::cout<<"cloud source: "<<cloud_rotate->size()<<" cloud target "<<mini_map->size()<< std::endl;
-        icp.setMaximumIterations (10);
+        icp.setMaximumIterations (50);
         icp.setMaxCorrespondenceDistance(5.0);
         icp.setInputSource (cloud_rotate);
         icp.setInputTarget (mini_map);
         icp.align (*cloud_icp);
         icp_score=icp.getFitnessScore();
         icp_matrix = icp.getFinalTransformation ();
+        write_to_file(pose_x, pose_x, k, icp_score);
         pcl_ros::transformPointCloud (*cloud_icp, *cloud_icp, map_pose);
         sensor_msgs::PointCloud2 output3;
         pcl::toROSMsg (*cloud_icp, output3);
@@ -380,7 +381,7 @@ int main(int argc, char** argv)
         priv_nh.getParam("global_frame_id", global_frame_id_);
         priv_nh.getParam("odom_frame_id", odom_frame_id_);
 
-        myfile.open (file_location.c_str());
+        myfile.open ("/home/weikang/weikang_ws/src/pointcloud_cluster/src/pointcloud_registration/map/kidnap_pose.txt");
         myfile<<"pose_x pose_y degree score\n";
 
     ros::Subscriber input_pointcloud = nh.subscribe<sensor_msgs::PointCloud2> ("input", 1, pointcloud_cb);
