@@ -178,7 +178,7 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
     map_pose_inverse = map_pose.inverse();
     pcl::PointCloud<pcl::PointXYZ>::Ptr mini_map (new pcl::PointCloud<pcl::PointXYZ>);
     pcl_ros::transformPointCloud (*target, *mini_map, map_pose_inverse);
-    for (int k=0; k<360; k++)
+    for (int k=0; k<72; k++)
     {
         //std::cout<<"now is in degree: "<<k*5<<std::endl;
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_rotate(new pcl::PointCloud<pcl::PointXYZ>);
@@ -198,7 +198,23 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
         icp.align (*cloud_icp);
         icp_score=icp.getFitnessScore();
         icp_matrix = icp.getFinalTransformation ();
-        write_to_file(pose_x, pose_x, k, icp_score);
+        if (icp_score<0.5)
+        {
+            for (int n=0; n<5; n++)
+            {
+                icp.setInputSource (cloud_icp);
+                icp.setInputTarget (mini_map);
+                icp.align (*cloud_icp);
+                icp_score=icp.getFitnessScore();
+                icp_matrix = icp.getFinalTransformation ();
+                write_to_file(pose_x, pose_x, k, icp_score);
+            }
+        }
+        else
+        {
+            write_to_file(pose_x, pose_x, k, icp_score);
+        }
+
         pcl_ros::transformPointCloud (*cloud_icp, *cloud_icp, map_pose);
         sensor_msgs::PointCloud2 output3;
         pcl::toROSMsg (*cloud_icp, output3);
