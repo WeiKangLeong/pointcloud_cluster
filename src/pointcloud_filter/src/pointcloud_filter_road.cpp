@@ -30,8 +30,8 @@
 //#include <algorithm.h>
 
 #define RES 0.1
-#define RANGE_X 40.0
-#define RANGE_Y 40.0
+#define RANGE_X 50.0
+#define RANGE_Y 50.0
 
 Grid* grid_map_;
 
@@ -226,15 +226,15 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
     pass.setInputCloud (cloud_all);
     pass.setFilterFieldName ("x");
-    pass.setFilterLimits (-RANGE_X/2, RANGE_X/2);
+    pass.setFilterLimits (-RANGE_X, RANGE_X);
     pass.filter (*cloud_in);
     pass.setInputCloud (cloud_in);
     pass.setFilterFieldName ("y");
-    pass.setFilterLimits (-RANGE_Y/2, RANGE_Y/2);
+    pass.setFilterLimits (-RANGE_Y, RANGE_Y);
     pass.filter (*cloud_in);
     pass.setInputCloud (cloud_in);
     pass.setFilterFieldName ("z");
-    pass.setFilterLimits (-2.0, -1.9);
+    pass.setFilterLimits (-3.0, -1.5);
     pass.filter (*cloud_in);
 
     // put index for every point
@@ -266,7 +266,7 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         // Mandatory
         seg.setModelType (pcl::SACMODEL_PLANE);
         seg.setMethodType (pcl::SAC_RANSAC);
-        seg.setDistanceThreshold (0.05);
+        seg.setDistanceThreshold (0.1);
 
         seg.setInputCloud (cloud_filtered->makeShared ());
         seg.segment (*inliers, coefficients);
@@ -307,14 +307,15 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
         sensor_msgs::PointCloud2 output;
         pcl::toROSMsg (*cloud_lowest_mapped, output);
-        output.header.frame_id = "map";
+        output.header = input->header;
+        output.header.frame_id = "iMiev/base_link";
         pub.publish (output);
 
         //std::cout<<"Road plane: "<<cloud_lowest_mapped->size()<< " object cloud: "<<cloud_f->size()<<std::endl;
         sensor_msgs::PointCloud2 output2;
         pcl::toROSMsg (*cloud_f, output2);
         output2.header = input->header;
-        output2.header.frame_id = "map";
+        output2.header.frame_id = "iMiev/base_link";
         pub_object.publish (output2);
 
         grid_map_->ClearGrid();
