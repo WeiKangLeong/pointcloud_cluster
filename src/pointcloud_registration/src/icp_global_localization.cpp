@@ -198,7 +198,7 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
         icp.align (*cloud_icp);
         icp_score=icp.getFitnessScore();
         icp_matrix = icp.getFinalTransformation ();
-        if (icp_score<0.5)
+        if (icp_score<0.8)
         {
             for (int n=0; n<5; n++)
             {
@@ -207,12 +207,14 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
                 icp.align (*cloud_icp);
                 icp_score=icp.getFitnessScore();
                 icp_matrix = icp.getFinalTransformation ();
-                write_to_file(pose_x, pose_x, k, icp_score);
+                write_to_file(pose_x, pose_y, k, icp_score);
+                std::cout<<"icp score: "<<icp_score<<std::endl;
             }
         }
         else
         {
-            write_to_file(pose_x, pose_x, k, icp_score);
+            write_to_file(pose_x, pose_y, k, icp_score);
+            std::cout<<"icp score: "<<icp_score<<std::endl;
         }
 
         pcl_ros::transformPointCloud (*cloud_icp, *cloud_icp, map_pose);
@@ -234,7 +236,7 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
         }
     }
 
-    std::cout<<"icp score: "<<result<<std::endl;
+    
 }
 
 
