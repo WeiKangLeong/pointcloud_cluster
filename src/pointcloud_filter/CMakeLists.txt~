@@ -151,6 +151,9 @@ add_executable(pointcloud_filter_box src/pointcloud_filter_box.cpp)
 add_executable(pointcloud_filter_road src/pointcloud_filter_road.cpp)
 add_executable(pointcloud_filter_color_box src/pointcloud_filter_color_box.cpp)
 add_executable(pointcloud_filter_passthrough src/pointcloud_filter_passthrough.cpp)
+add_executable(pointcloud_filter_readwrite src/pointcloud_filter_readwrite.cpp)
+add_executable(pointcloud_filter_map_ground src/pointcloud_filter_map_ground.cpp)
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -168,4 +171,6 @@ target_link_libraries(pointcloud_filter_box ${catkin_LIBRARIES} ${OpenCV_LIBRARI
 target_link_libraries(pointcloud_filter_road ${catkin_LIBRARIES})
 target_link_libraries(pointcloud_filter_color_box ${catkin_LIBRARIES})
 target_link_libraries(pointcloud_filter_passthrough ${catkin_LIBRARIES})
+target_link_libraries(pointcloud_filter_readwrite ${catkin_LIBRARIES})
+target_link_libraries(pointcloud_filter_map_ground ${catkin_LIBRARIES})
 

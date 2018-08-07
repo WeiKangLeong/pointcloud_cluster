@@ -1,0 +1,8 @@
+<launch>
+	<node pkg="pointcloud_filter" type="pointcloud_filter_road" name="filter_road" output="screen" >
+		<remap from="cloud_input" to="/read_cloud" />
+	</node>
+	<node pkg="pointcloud_filter" type="pointcloud_filter_readwrite" name="read_write" output="screen" >
+		<remap from="input" to="/object_on_road" />
+	</node>
+</launch>
