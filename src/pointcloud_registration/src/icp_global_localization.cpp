@@ -239,6 +239,37 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
     
 }
 
+void pose_info(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
+{
+    pcl::PointXYZ min_point, max_point;
+    pcl::getMinMax3D (*cloud_largemap, min_point, max_point);
+    min_point.x = min_point.x - 1.0;
+    min_point.y = min_point.y - 1.0;
+    max_point.x = max_point.x + 1.0;
+    max_point.y = max_point.y + 1.0;
+
+    double start_x = min_point.x +35.0;
+    double start_y = min_point.y +35.0;
+    int max_i = ((max_point.x-min_point.x)-70)/5;
+    int max_j = ((max_point.y-min_point.y)-70)/5;
+    int count = 0;
+
+    std::cout<<start_x<<" "<<start_y<<" "<<max_i<<" "<<max_j<<std::endl;
+
+    for (int i=0; i<max_i; i++)
+    {
+        for (int j=0; j<max_j; j++)
+        {
+            write_to_file(5*i+start_x, 5*j+start_y, 0, 0.0);
+        }
+    }
+
+    myfile.close();
+    std::cout<<"txt saved."<<std::endl;
+    //std::cout<<"pointcloud callback end... in " << time.toc () << " ms"<<std::endl;
+    ros::shutdown();
+}
+
 
 void cut_map(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
 {
@@ -398,8 +429,8 @@ int main(int argc, char** argv)
         priv_nh.getParam("global_frame_id", global_frame_id_);
         priv_nh.getParam("odom_frame_id", odom_frame_id_);
 
-        myfile.open ("/home/weikang/weikang_ws/src/pointcloud_cluster/src/pointcloud_registration/map/kidnap_pose.txt");
-        myfile<<"pose_x pose_y degree score\n";
+        myfile.open ("/home/smaug/pose.txt");
+        myfile<<"pose_x pose_y\n";
 
         icp.setMaximumIterations (10);
         icp.setMaxCorrespondenceDistance(5.0);
@@ -422,6 +453,8 @@ int main(int argc, char** argv)
     pcl::io::loadPCDFile(map_location, *cloud_largemap);
 
     std::cout<<cloud_largemap->size()<<std::endl;
+
+    pose_info(cloud_largemap);
 
     ros::spin();
 }

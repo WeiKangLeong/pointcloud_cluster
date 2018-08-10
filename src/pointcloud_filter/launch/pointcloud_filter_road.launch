@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="pointcloud_filter" type="pointcloud_filter_road" name="road_filter">
+    <remap from="cloud_input" to="/top_velodyne/velodyne_points" />
+  </node>
+</launch>

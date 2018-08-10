@@ -1,8 +1,14 @@
 <launch>
-	<node pkg="pointcloud_filter" type="pointcloud_filter_road" name="filter_road" >
-		<remap from="cloud_input" to="/read_cloud" />
+	<node pkg="pointcloud_filter" type="pointcloud_filter_road" name="filter_road" output="screen" >
+		<remap from="cloud_input" to="/map_in_total" />
 	</node>
-	<node pkg="pointcloud_filter" type="pointcloud_filter_readwrite" name="read_write" >
+	<!--<node pkg="pointcloud_filter" type="pointcloud_filter_readwrite" name="read_write" output="screen" >
 		<remap from="input" to="/object_on_road" />
+	</node>-->
+
+	<arg name="map_location" default="$(find pointcloud_registration)/map/loam_cleantech_filtered.pcd" />
+    <node pkg="pointcloud_registration" type="show_map" name="show_map" >
+		<param name="map_location" value="$(arg map_location)" />
+		<param name="global_frame_id" value="wheelchair/map" />
 	</node>
 </launch>

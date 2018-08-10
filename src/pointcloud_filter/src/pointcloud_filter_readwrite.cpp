@@ -102,12 +102,12 @@ main (int argc, char** argv)
 //  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_minimap(new pcl::PointCloud<pcl::PointXYZ>);
 //  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_blah(new pcl::PointCloud<pcl::PointXYZ>);
 
-  pcl::io::loadPCDFile("/home/smaug/loam_cleantech_filtered.pcd", *cloud_largemap);
-  std::cout<<"map loaded..."<<std::endl;
-  sensor_msgs::PointCloud2 output;
-  pcl::toROSMsg (*cloud_largemap, output);
-  output.header.frame_id = "wheelchair/map";
-  pub.publish(output);
+//  pcl::io::loadPCDFile("/home/smaug/loam_cleantech_filtered.pcd", *cloud_largemap);
+//  std::cout<<"map loaded..."<<std::endl;
+//  sensor_msgs::PointCloud2 output;
+//  pcl::toROSMsg (*cloud_largemap, output);
+//  output.header.frame_id = "wheelchair/map";
+//  pub.publish(output);
 //  pcl::PassThrough<pcl::PointXYZ> pass;
 //  pass.setInputCloud (cloud_largemap);
 //  pass.setFilterFieldName ("x");

@@ -74,6 +74,7 @@ main (int argc, char** argv)
         {
             for (int j=1; j<divide; j++)
             {
+
                 pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_large_map(new pcl::PointCloud<pcl::PointXYZI>);
                 pass.setInputCloud (cloud_in);
                 pass.setFilterFieldName ("x");

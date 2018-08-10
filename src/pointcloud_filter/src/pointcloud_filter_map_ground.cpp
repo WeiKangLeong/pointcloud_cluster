@@ -29,9 +29,9 @@
 #include "../../../include/grid.h"
 //#include <algorithm.h>
 
-#define RES 0.1
-#define RANGE_X 300.0
-#define RANGE_Y 300.0
+#define RES 0.5
+#define RANGE_X 30.0
+#define RANGE_Y 30.0
 
 Grid* grid_map_;
 
@@ -133,8 +133,8 @@ void find_a_plane()
 
        visualization_msgs::Marker line_strip;
        //visualization_msgs::MarkerArray ma;
-       line_strip.header.frame_id = "/map";
-       line_strip.header.stamp = ros::Time::now();
+       line_strip.header.frame_id = "wheelchair/map";
+       //line_strip.header.stamp = ros::Time::now();
        //line_strip.ns = "pedestrian";
 
        line_strip.action = visualization_msgs::Marker::ADD;
@@ -205,7 +205,9 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
     pcl::console::TicToc time;
     time.tic ();
 
+    pcl::PointCloud<pcl::PointXYZ>::Ptr shift_pointcloud (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg (*input, *cloud_all);
+    pcl::fromROSMsg (*input, *shift_pointcloud);
     if (view_imu==true)
     {
         tf::StampedTransform latest_imu_transform;
@@ -221,7 +223,17 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
     // Create a container for the data.
 
+    Eigen::Vector4f centroid;
+    pcl::compute3DCentroid(*shift_pointcloud, centroid);
 
+    tf::Transform tozero;
+    tozero.setOrigin(tf::Vector3(-centroid[0], -centroid[1], 0.0));
+    tozero.setRotation(tf::Quaternion(0.0, 0.0, 0.0, 1.0));
+    pcl_ros::transformPointCloud(*cloud_all, *cloud_all, tozero);
+
+    std::cout<<centroid[0]<<" "<<centroid[1]<<std::endl;
+
+    //<<" "<<centroid.y<<" "<<centroid.z
     *cloud_indices = *cloud_all;
     *cloud_in = *cloud_all;
 
@@ -255,7 +267,7 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
         for (int cnt_r=0; cnt_r<filter_road_->size(); cnt_r++)
         {
-            cloud_filtered->push_back(cloud_in->points[filter_road_->at(cnt_r)]);
+            cloud_filtered->push_back(cloud_indices->points[filter_road_->at(cnt_r)]);
         }
 
         pcl::ModelCoefficients coefficients;
@@ -267,7 +279,7 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         // Mandatory
         seg.setModelType (pcl::SACMODEL_PLANE);
         seg.setMethodType (pcl::SAC_RANSAC);
-        seg.setDistanceThreshold (0.5);
+        seg.setDistanceThreshold (0.1);
 
         //seg.setInputCloud (cloud_indices->makeShared ());
         seg.setInputCloud (cloud_filtered->makeShared ());
@@ -283,12 +295,12 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         extract.filter (*cloud_lowest_mapped);
 
         sensor_msgs::PointCloud2 output3;
-        pcl::toROSMsg (*cloud_lowest_mapped, output3);
+        pcl::toROSMsg (*cloud_filtered, output3);
         output3.header = input->header;
-        output3.header.frame_id = "iMiev/base_link";
-        pub_object.publish (output3);
+        output3.header.frame_id = "wheelchair/map";
+        pub.publish (output3);
 
-        //std::cout<<"PointCloud size: "<<cloud_in->size()<<" to "<<cloud_filtered->size()<<" to "<<cloud_lowest_mapped->size()<<std::endl;
+        std::cout<<"PointCloud size: "<<cloud_in->size()<<" to "<<cloud_filtered->size()<<" to "<<cloud_lowest_mapped->size()<<std::endl;
 
         find_a_plane();
 
@@ -317,15 +329,15 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 //        sensor_msgs::PointCloud2 output;
 //        pcl::toROSMsg (*cloud_lowest_mapped, output);
 //        output.header = input->header;
-//        output.header.frame_id = "iMiev/base_link";
+//        output.header.frame_id = "wheelchair/map";
 //        pub.publish (output);
 
         std::cout<<"Road plane: "<<cloud_lowest_mapped->size()<< " object cloud: "<<cloud_f->size()<<std::endl;
-//        sensor_msgs::PointCloud2 output2;
-//        pcl::toROSMsg (*cloud_f, output2);
-//        output2.header = input->header;
-//        output2.header.frame_id = "iMiev/base_link";
-//        pub_object.publish (output2);
+        sensor_msgs::PointCloud2 output2;
+        pcl::toROSMsg (*cloud_f, output2);
+        output2.header = input->header;
+        output2.header.frame_id = "wheelchair/map";
+        pub_object.publish (output2);
 
         grid_map_->ClearGrid();
         cloud_lowest_mapped.reset(new pcl::PointCloud<pcl::PointXYZI>);
@@ -398,6 +410,19 @@ main (int argc, char** argv)
   icp.setMaximumIterations (30);
   //icp.setMaxCorrespondenceDistance(0.5);
   //icp.setTransformationEpsilon (1e-7);
+
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_largemap(new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_gridmap(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::io::loadPCDFile("/home/smaug/loam_cleantech_filtered.pcd", *cloud_largemap);
+    std::cout<<"map loaded..."<<std::endl;
+
+    for (int i=0; i<cloud_largemap->size(); i++)
+    {
+        grid_map_->InsertXYZI(cloud_largemap->points[i], i);
+    }
+
+    cloud_gridmap = grid_map_->find_vertical(cloud_largemap);
+
 
   // Spin
   ros::spin ();
