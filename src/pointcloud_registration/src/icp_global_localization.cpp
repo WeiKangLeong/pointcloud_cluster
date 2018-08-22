@@ -178,7 +178,7 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
     map_pose_inverse = map_pose.inverse();
     pcl::PointCloud<pcl::PointXYZ>::Ptr mini_map (new pcl::PointCloud<pcl::PointXYZ>);
     pcl_ros::transformPointCloud (*target, *mini_map, map_pose_inverse);
-    for (int k=0; k<72; k++)
+    for (int k=0; k<60; k++)
     {
         //std::cout<<"now is in degree: "<<k*5<<std::endl;
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_rotate(new pcl::PointCloud<pcl::PointXYZ>);
@@ -187,7 +187,7 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
         double icp_score;
         tf::Transform rotate;
         tf::Quaternion degree;
-        degree.setRPY(0, 0, k*3.1415926/180);
+        degree.setRPY(0, 0, 6*k*3.1415926/180);
         rotate.setRotation(degree);
         pcl_ros::transformPointCloud (*source, *cloud_rotate, rotate);
 
@@ -429,10 +429,10 @@ int main(int argc, char** argv)
         priv_nh.getParam("global_frame_id", global_frame_id_);
         priv_nh.getParam("odom_frame_id", odom_frame_id_);
 
-        myfile.open ("/home/smaug/pose.txt");
-        myfile<<"pose_x pose_y\n";
+        myfile.open ("/home/weikang/weikang_ws/src/pointcloud_cluster/src/pointcloud_registration/map/kidnap_pose.txt");
+        myfile<<"pose_x pose_y degree score\n";
 
-        icp.setMaximumIterations (10);
+        icp.setMaximumIterations (5);
         icp.setMaxCorrespondenceDistance(5.0);
 
     ros::Subscriber input_pointcloud = nh.subscribe<sensor_msgs::PointCloud2> ("input", 1, pointcloud_cb);
@@ -454,7 +454,7 @@ int main(int argc, char** argv)
 
     std::cout<<cloud_largemap->size()<<std::endl;
 
-    pose_info(cloud_largemap);
+    //pose_info(cloud_largemap);
 
     ros::spin();
 }
