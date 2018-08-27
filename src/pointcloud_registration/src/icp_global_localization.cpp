@@ -183,7 +183,8 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
         //std::cout<<"now is in degree: "<<k*5<<std::endl;
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_rotate(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_icp(new pcl::PointCloud<pcl::PointXYZ>);
-        Eigen::Matrix4f icp_matrix;
+        Eigen::Matrix4f icp_matrix, iterate_matrix;
+        iterate_matrix.setIdentity();
         double icp_score;
         tf::Transform rotate;
         tf::Quaternion degree;
@@ -200,6 +201,7 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
         icp_matrix = icp.getFinalTransformation ();
         if (icp_score<0.8)
         {
+            iterate_matrix = icp_matrix;
             for (int n=0; n<5; n++)
             {
                 icp.setInputSource (cloud_icp);
@@ -209,6 +211,7 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
                 icp_matrix = icp.getFinalTransformation ();
                 write_to_file(pose_x, pose_y, k, icp_score);
                 std::cout<<"icp score: "<<icp_score<<std::endl;
+                iterate_matrix = iterate_matrix*icp_matrix;
             }
         }
         else
@@ -231,8 +234,17 @@ void searching(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::
         else */if (icp_score<result)
         {
             result = icp_score;
-            transform_result = EigenToTF(icp_matrix);
-            transform_result = transform_result * map_pose;
+            if (result<0.8)
+            {
+                transform_result = EigenToTF(iterate_matrix);
+                transform_result = transform_result * map_pose;
+            }
+            else
+            {
+                transform_result = EigenToTF(icp_matrix);
+                transform_result = transform_result * map_pose;
+            }
+
         }
     }
 
