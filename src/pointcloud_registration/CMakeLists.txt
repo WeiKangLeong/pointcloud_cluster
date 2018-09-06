@@ -16,6 +16,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   tf_conversions
+  tf2
+  tf2_geometry_msgs
+  tf2_msgs
+  tf2_ros
   visualization_msgs
 )
 

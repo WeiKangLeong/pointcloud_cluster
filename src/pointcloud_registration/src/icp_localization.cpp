@@ -13,6 +13,15 @@
 #include <tf/transform_datatypes.h>
 #include <tf/tfMessage.h>
 #include <tf_conversions/tf_eigen.h>
+
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_ros/buffer.h>
+#include <tf2/convert.h>
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -48,6 +57,11 @@ nav_msgs::Odometry guess_odom, initial_odom, offset_odom, input_odom;
 
 double global_roll, global_pitch, global_yaw, r, p, y, first_score, second_score, guess_movement,
         i_r, i_p, i_y, wheel_in_z, diff_p, prev_p;
+
+tf2_ros::TransformBroadcaster *tfb2_;
+tf2_ros::TransformListener *tfl2_;
+tf2_ros::Buffer *tf_;
+tf2::Transform latest_tf2_;
 
 tf::TransformBroadcaster *tfb;
 tf::TransformListener *tf_listener_;
@@ -388,6 +402,38 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
         pub_localize.publish(icp_pose);
 
+        geometry_msgs::PoseStamped odom_to_map;
+        try
+        {
+            tf2::Quaternion q(icp_pose.pose.pose.orientation.x, icp_pose.pose.pose.orientation.y, icp_pose.pose.pose.orientation.z, icp_pose.pose.pose.orientation.w);
+            tf2::Transform tmp_tf(q, tf2::Vector3(icp_pose.pose.pose.position.x, icp_pose.pose.pose.position.y, icp_pose.pose.pose.position.z));
+            geometry_msgs::PoseStamped tmp_tf_stamped;
+            tmp_tf_stamped.header.frame_id = base_frame_id_;
+            tmp_tf_stamped.header.stamp = input->header.stamp;
+            tf2::toMsg(tmp_tf.inverse(), tmp_tf_stamped.pose);
+
+            tf_->transform(tmp_tf_stamped, odom_to_map, odom_frame_id_);
+
+        }
+
+        catch(tf2::TransformException)
+        {
+            ROS_DEBUG("Failed to subtract base to odom transform");
+            return;
+        }
+
+        tf2::convert(odom_to_map.pose, latest_tf2_);
+
+        ros::Time transform_expiration = (input->header.stamp + ros::Duration(0.1));
+        geometry_msgs::TransformStamped tmp_tf_stamped;
+        tmp_tf_stamped.header.frame_id = global_frame_id_;
+        tmp_tf_stamped.header.stamp = transform_expiration;
+        tmp_tf_stamped.child_frame_id = odom_frame_id_;
+        tf2::convert(latest_tf2_.inverse(), tmp_tf_stamped.transform);
+
+        tfb2_->sendTransform(tmp_tf_stamped);
+
+
     /*
         geometry_msgs::PoseStamped odom_to_map;
         try
@@ -507,6 +553,10 @@ int main(int argc, char** argv)
     tfb = new tf::TransformBroadcaster();
     tf_listener_ = new tf::TransformListener();
     odom_start = false;
+
+    tfb2_ = new tf2_ros::TransformBroadcaster();
+    tf_ = new tf2_ros::Buffer();
+    //tfl2_ = new tf2_ros::TransformListener(tf_);
 
     transform.setOrigin(tf::Vector3(0.0,0.0,0.0));
     transform.setRotation(tf::Quaternion(0.0,0.0,0.0,1.0));
