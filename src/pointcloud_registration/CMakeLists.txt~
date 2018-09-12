@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(pointcloud_registration)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
+
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -16,6 +17,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   tf_conversions
+  tf2
+  tf2_geometry_msgs
+  tf2_msgs
+  tf2_ros
   visualization_msgs
 )
 
@@ -145,6 +150,9 @@ add_executable (icp_localize src/icp_localization.cpp)
 target_link_libraries(icp_localize ${catkin_LIBRARIES})
 add_executable (show_map src/show_map.cpp)
 target_link_libraries(show_map ${catkin_LIBRARIES})
+add_executable (icp_globalize src/icp_global_localization.cpp)
+target_link_libraries(icp_globalize ${catkin_LIBRARIES})
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

@@ -1,4 +1,10 @@
 #include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <cmath>
+#include <memory>
+
 #include <string>
 #include <ros/ros.h>
 #include <ros/console.h>
@@ -58,10 +64,6 @@ nav_msgs::Odometry guess_odom, initial_odom, offset_odom, input_odom;
 double global_roll, global_pitch, global_yaw, r, p, y, first_score, second_score, guess_movement,
         i_r, i_p, i_y, wheel_in_z, diff_p, prev_p;
 
-tf2_ros::TransformBroadcaster *tfb2_;
-tf2_ros::TransformListener *tfl2_;
-tf2_ros::Buffer *tf_;
-tf2::Transform latest_tf2_;
 
 tf::TransformBroadcaster *tfb;
 tf::TransformListener *tf_listener_;
@@ -402,7 +404,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
         pub_localize.publish(icp_pose);
 
-        geometry_msgs::PoseStamped odom_to_map;
+        /*geometry_msgs::PoseStamped odom_to_map;
         try
         {
             tf2::Quaternion q(icp_pose.pose.pose.orientation.x, icp_pose.pose.pose.orientation.y, icp_pose.pose.pose.orientation.z, icp_pose.pose.pose.orientation.w);
@@ -433,7 +435,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
         tfb2_->sendTransform(tmp_tf_stamped);
 
-
+    */
     /*
         geometry_msgs::PoseStamped odom_to_map;
         try
@@ -467,7 +469,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
                         global_frame_id_, odom_frame_id_);
         tfb->sendTransform(tmp_tf_stamped);
         */
-        tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, "wheelchair/map", "wheelchair/base_link");
+        tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, "wheelchair/map", "wheelchair/odom");
         tfb->sendTransform(odom_transform_stamped);
 
         }
@@ -524,9 +526,9 @@ void imu_cb(sensor_msgs::Imu::ConstPtr imu_data)
 int main(int argc, char** argv)
 {
 	// Initialize ROS
-	ros::init(argc, argv, "my_pcl_tutorial");
+        ros::init(argc, argv, "icp_localize");
 	ros::NodeHandle nh;
-    ros::NodeHandle priv_nh("~");
+        ros::NodeHandle priv_nh("~");
 
 	ROS_INFO("start");
 	
@@ -554,9 +556,6 @@ int main(int argc, char** argv)
     tf_listener_ = new tf::TransformListener();
     odom_start = false;
 
-    tfb2_ = new tf2_ros::TransformBroadcaster();
-    tf_ = new tf2_ros::Buffer();
-    //tfl2_ = new tf2_ros::TransformListener(tf_);
 
     transform.setOrigin(tf::Vector3(0.0,0.0,0.0));
     transform.setRotation(tf::Quaternion(0.0,0.0,0.0,1.0));
@@ -569,7 +568,7 @@ int main(int argc, char** argv)
     turn90.setOrigin(tf::Vector3(0,0,0));
     turn90.setRotation(degree90);
 
-    pcl::io::loadPCDFile(map_location, *cloud_largemap);
+    //pcl::io::loadPCDFile(map_location, *cloud_largemap);
    //pcl_ros::transformPointCloud (*cloud_largemap, *cloud_largemap, turn90);
 
 //    voxel_filter.setLeafSize (0.1, 0.1, 0.1);

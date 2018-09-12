@@ -571,11 +571,6 @@ public:
         return size_;
     }
 
-	std::vector<int>* getMap()
-	{
-		return map_;
-	}
-
     PointType GetCentroid(int row, int column)
     {
 

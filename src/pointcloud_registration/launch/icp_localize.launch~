@@ -9,7 +9,7 @@
 		<remap from="input" to="/wheelchair/velodyne_points" />
 	</node>
 
-	<node pkg="pointcloud_registration" type="show_map" name="show_map" output="screen">
+	<node pkg="pointcloud_registration" type="show_map" name="show_map" >
 		<param name="map_location" value="$(arg map_location)" />
 		<param name="global_frame_id" value="wheelchair/map" />
 	</node>
