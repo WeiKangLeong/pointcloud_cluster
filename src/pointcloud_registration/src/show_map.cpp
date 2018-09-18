@@ -23,7 +23,7 @@
 #include <pcl/common/geometry.h>
 #include <visualization_msgs/Marker.h>
 
-ros::Publisher pub, pub_cylinder;
+ros::Publisher pub, pub_cylinder, pub_full_map;
 
 int
 main (int argc, char** argv)
@@ -38,6 +38,7 @@ main (int argc, char** argv)
     priv_nh.getParam("global_frame_id", global_frame_id);
 
     pub = nh.advertise<sensor_msgs::PointCloud2> ("/map_in_total", 1);
+    pub_full_map = nh.advertise<sensor_msgs::PointCloud2> ("/full_map", 1);
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZI>);
 
@@ -54,8 +55,26 @@ main (int argc, char** argv)
     max_point.x = max_point.x + 1.0;
     max_point.y = max_point.y + 1.0;
 
+    tf::Transform offset_transform;
+//    tf::Quaternion degree90;
+//    degree90.setRPY(0.0,0.0,90.0);
+    offset_transform.setOrigin(tf::Vector3(-min_point.x-1.0, -min_point.y-1.0, 0.0));
+    offset_transform.setRotation(tf::Quaternion(0.0, 0.0, 0.0, 1.0));
+
+    pcl_ros::transformPointCloud(*cloud_in, *cloud_in, offset_transform);
+
+    sensor_msgs::PointCloud2 output2;
+    pcl::toROSMsg (*cloud_in, output2);
+    output2.header.frame_id = global_frame_id;
+    pub_full_map.publish(output2);
+
+    max_point.x = max_point.x -min_point.x;
+    max_point.y = max_point.y -min_point.y;
+    min_point.x = 0.0;
+    min_point.y = 0.0;
+
     int sum_size=0;
-    std::cout<<cloud_in->size()<<std::endl;
+    //std::cout<<cloud_in->size()<<std::endl;
 
     if (cloud_in->size()<400000)
     {

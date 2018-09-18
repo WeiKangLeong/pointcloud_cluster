@@ -1,11 +1,3 @@
-#include <iostream>
-#include <algorithm>
-#include <vector>
-#include <map>
-#include <cmath>
-#include <memory>
-
-#include <string>
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <math.h>
@@ -100,6 +92,11 @@ int danger,chance;
 
 std::string base_frame_id_, global_frame_id_, odom_frame_id_;
 
+//private parameters
+int icp_max_iter_;
+double icp_max_distance_;
+double icp_filter_size_;
+
 void print4x4Matrix (const Eigen::Matrix4f & matrix)
 {
   printf ("Rotation matrix :\n");
@@ -150,14 +147,16 @@ Eigen::Matrix4f localize()
 
     pcl_ros::transformPointCloud (*cloud_minimap, *map_origin, origin_tf);
 
+    //std::cout<<cloud_transform->size()<<" "<<map_origin->size()<<std::endl;
     double score;
 
     Eigen::Matrix4f  use_odom, compare_matrix;
     use_odom = setTransformMatrix(0.0, true);
 
-    icp.setMaximumIterations (5);
-    icp.setMaxCorrespondenceDistance(2.0);
+    icp.setMaximumIterations (icp_max_iter_);
+    icp.setMaxCorrespondenceDistance(icp_max_distance_);
     //icp.setTransformationEpsilon (1e-7);
+
     icp.setInputSource (cloud_transform);
     icp.setInputTarget (map_origin);
     icp.align (*cloud_comeout);
@@ -353,11 +352,12 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
         if (location_confirm)
         {
-        voxel_filter.setLeafSize (0.2, 0.2, 0.2);
+            //pcl_ros::transformPointCloud (*cloud_in, *cloud_transform, transform);
+        voxel_filter.setLeafSize (icp_filter_size_, icp_filter_size_, icp_filter_size_);
         voxel_filter.setInputCloud (cloud_in);
         voxel_filter.filter (*cloud_transform);
         std::cout << "Filtered cloud contains " << cloud_transform->size ()
-              << " data points from velodyne point cloud" << std::endl;
+              << " data points from original point cloud: "<<cloud_in->size() << std::endl;
 
         transformation_matrix = localize();
 
@@ -469,7 +469,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
                         global_frame_id_, odom_frame_id_);
         tfb->sendTransform(tmp_tf_stamped);
         */
-        tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, "wheelchair/map", "wheelchair/odom");
+        tf::StampedTransform odom_transform_stamped(transform, input->header.stamp+ros::Duration(time.toc()/1000), global_frame_id_, base_frame_id_);
         tfb->sendTransform(odom_transform_stamped);
 
         }
@@ -523,6 +523,12 @@ void imu_cb(sensor_msgs::Imu::ConstPtr imu_data)
 
 }
 
+void map_cb(sensor_msgs::PointCloud2::ConstPtr map)
+{
+    pcl::fromROSMsg (*map, *cloud_largemap);
+    std::cout<<"map received with points: "<<cloud_largemap->size()<<std::endl;
+}
+
 int main(int argc, char** argv)
 {
 	// Initialize ROS
@@ -537,10 +543,14 @@ int main(int argc, char** argv)
         priv_nh.getParam("base_frame_id", base_frame_id_);
         priv_nh.getParam("global_frame_id", global_frame_id_);
         priv_nh.getParam("odom_frame_id", odom_frame_id_);
+        priv_nh.getParam("icp_iteration", icp_max_iter_);
+        priv_nh.getParam("icp_distance", icp_max_distance_);
+        priv_nh.getParam("icp_filter_size", icp_filter_size_);
 
     ros::Subscriber input_pointcloud = nh.subscribe<sensor_msgs::PointCloud2> ("input", 1, pointcloud_cb);
     ros::Subscriber input_localize = nh.subscribe<geometry_msgs::PoseWithCovarianceStamped> ("/initialpose",1, initial_pose_cb);
     ros::Subscriber input_imu = nh.subscribe<sensor_msgs::Imu> ("imu",1, imu_cb);
+    ros::Subscriber input_map = nh.subscribe<sensor_msgs::PointCloud2> ("/full_map", 1, map_cb);
 
     // Create a ROS publisher for the output point cloud
     pub_icp_odom = nh.advertise<nav_msgs::Odometry> ("icp_odom", 1);
@@ -563,12 +573,14 @@ int main(int argc, char** argv)
     prev_odom_transform.setOrigin(tf::Vector3(0.0,0.0,0.0));
     prev_odom_transform.setRotation(tf::Quaternion(0.0,0.0,0.0,1.0));
 
-    tf::Quaternion degree90;
-    degree90.setRPY(0.0,0.0,90.0);
-    turn90.setOrigin(tf::Vector3(0,0,0));
-    turn90.setRotation(degree90);
+//    tf::Quaternion degree90;
+//    degree90.setRPY(0.0,0.0,90.0);
+//    turn90.setOrigin(tf::Vector3(0,0,0));
+//    turn90.setRotation(degree90);
 
-    //pcl::io::loadPCDFile(map_location, *cloud_largemap);
+//    std::cout<<"map_location: "<<map_location<<std::endl;
+
+//    pcl::io::loadPCDFile(map_location, *cloud_largemap);
    //pcl_ros::transformPointCloud (*cloud_largemap, *cloud_largemap, turn90);
 
 //    voxel_filter.setLeafSize (0.1, 0.1, 0.1);
@@ -580,10 +592,9 @@ int main(int argc, char** argv)
 //    // apply filter
 //    outrem.filter (*cloud_largemap);
 
-    std::cout << "Filtered map contains " << cloud_largemap->size ()
-          << " data points from map" << std::endl;
+//    std::cout << "Filtered map contains " << cloud_largemap->size ()<< " data points from map" << std::endl;
 
-    ROS_INFO("map loaded.");
+//    ROS_INFO("map loaded.");
 	// Spin
     ros::spin();
 }
