@@ -52,6 +52,7 @@ public:
     pcl::PointCloud<PointType>::Ptr cloud_;
     pcl::PointCloud<PointType>::Ptr cloud_2;
     pcl::PointCloud<PointType2>::Ptr cloud_3;
+    pcl::PointCloud<PointType2>::Ptr cloud_4;
 
 	std::vector<int>* map_;
 
@@ -102,6 +103,7 @@ public:
         cloud_.reset(new pcl::PointCloud<PointType>());
         cloud_2.reset(new pcl::PointCloud<PointType>());
         cloud_3.reset(new pcl::PointCloud<PointType2>());
+	cloud_4.reset(new pcl::PointCloud<PointType2>());
     }
 
     void InsertXYZI_with_origin(PointType2 point_in, int cnt)
@@ -571,6 +573,11 @@ public:
         return size_;
     }
 
+	std::vector<int>* getMap()
+	{
+		return map_;
+	}
+
     PointType GetCentroid(int row, int column)
     {
 
@@ -928,6 +935,7 @@ public:
         cloud_.reset(new pcl::PointCloud<PointType>());
         cloud_2.reset(new pcl::PointCloud<PointType>());
         cloud_3.reset(new pcl::PointCloud<PointType2>());
+	cloud_4.reset(new pcl::PointCloud<PointType2>());
 
         indices_->clear();
         cluster_->clear();

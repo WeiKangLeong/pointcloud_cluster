@@ -52,6 +52,7 @@ public:
     pcl::PointCloud<PointType>::Ptr cloud_;
     pcl::PointCloud<PointType>::Ptr cloud_2;
     pcl::PointCloud<PointType2>::Ptr cloud_3;
+    pcl::PointCloud<PointType2>::Ptr cloud_4;
 
 	std::vector<int>* map_;
 
@@ -102,6 +103,7 @@ public:
         cloud_.reset(new pcl::PointCloud<PointType>());
         cloud_2.reset(new pcl::PointCloud<PointType>());
         cloud_3.reset(new pcl::PointCloud<PointType2>());
+	cloud_4.reset(new pcl::PointCloud<PointType2>());
     }
 
     void InsertXYZI_with_origin(PointType2 point_in, int cnt)
@@ -560,6 +562,88 @@ public:
         return cloud_3;
     }
 
+	pcl::PointCloud<PointType2>::Ptr find_vertical_feature(pcl::PointCloud<PointType2>::Ptr point_in)
+    {
+        bool keep_flag;
+	int size = 0;
+        for(int cnt_m=0;cnt_m<grid_number_m_;cnt_m++)
+        {
+            for(int cnt_n=0;cnt_n<grid_number_n_;cnt_n++)
+            {
+                keep_flag=false;
+                int grid_size = grid_num_->at(cnt_m)->at(cnt_n)->size();
+
+                PointType2 cell;
+                cell.x = cnt_m*res_;
+                cell.y = cnt_n*res_;
+                //cell.z = 0.0;
+
+                if (grid_size>1)
+                {
+                    sorting_height_ = new std::vector<double>;
+                    // can improve here to finding the lowest z point before subtracting
+                    for (int cnt_t=0; cnt_t<grid_size; cnt_t++)
+                    {
+                        sorting_height_->push_back(point_in->points[grid_num_->at(cnt_m)->at(cnt_n)->at(cnt_t)].z);
+                    }
+
+                    double lowest_z = *std::min_element(sorting_height_->begin(),sorting_height_->end());
+                    double highest_z = *std::max_element(sorting_height_->begin(),sorting_height_->end());
+                    double height_diff = highest_z - lowest_z;
+
+                    if (height_diff>0.5)
+                    {
+                        int height_z = int(highest_z-lowest_z) + 1;
+                        std::vector<int> vertical_box;
+                        vertical_box.resize(height_z/0.5);
+
+                        sorting_height_->clear();
+
+                        for (int cnt_j=0; cnt_j<grid_size; cnt_j++)
+                        {
+                            PointType2 point_current=point_in->points[grid_num_->at(cnt_m)->at(cnt_n)->at(cnt_j)];
+                            vertical_box.at(int((point_current.z - lowest_z)/0.5)) = 1;
+
+                            //std::cout<<height_diff<<std::endl;
+
+                        }
+
+                        double vertical_content=0.0;
+                        for (int h_size=0; h_size<vertical_box.size(); h_size++)
+                        {
+                            vertical_content = vertical_content+vertical_box.at(h_size);
+                        }
+                        if (vertical_content/vertical_box.size()>=0.5)
+                        {
+                            cell.z= vertical_content/vertical_box.size();
+				cloud_3->push_back(cell);
+                        }
+                        else
+                        {
+                            cell.z = 0.0;
+                        }
+                    }
+                    else
+                    {
+                        cell.z = 0.0;
+                    }
+
+                }
+                else
+                {
+                    cell.z = 0.0;
+                }
+
+                
+		size++;
+
+            }
+
+
+        }
+        return cloud_3;
+    }
+
     void store_floor(std::vector<std::vector<double>* >* floor)
     {
         floor_ = floor;
@@ -933,6 +1017,7 @@ public:
         cloud_.reset(new pcl::PointCloud<PointType>());
         cloud_2.reset(new pcl::PointCloud<PointType>());
         cloud_3.reset(new pcl::PointCloud<PointType2>());
+	cloud_4.reset(new pcl::PointCloud<PointType2>());
 
         indices_->clear();
         cluster_->clear();

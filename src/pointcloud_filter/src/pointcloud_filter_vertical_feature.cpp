@@ -49,18 +49,22 @@ bool start, view_imu;
 double a, b, c, d, norm;
 double p_a, p_b, p_c, p_d, p_norm;
 int change, min_neighbour, iteration;
-std::vector<double>* sorting_neighbour_;
-std::vector<int>* filter_road_;
-std::vector<std::vector<double>* >* floor_level_;
+
+tf::Transform shift_cloud, shift_back_cloud;
 
 tf::TransformListener *tf_listener_;
 
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 {
+    pcl::console::TicToc time;
+    time.tic();
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_largemap(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_transform(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_gridmap(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_grid(new pcl::PointCloud<pcl::PointXYZI>);
+
+    pcl::fromROSMsg (*input, *cloud_in);
 
     pass.setInputCloud (cloud_in);
     pass.setFilterFieldName ("x");
@@ -73,126 +77,72 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     pass.setFilterLimits (-50.0, 50.0);
     pass.filter (*cloud_in);
 
-    pcl::PointXYZI min_point, max_point;
-    pcl::getMinMax3D (*cloud_largemap, min_point, max_point);
+    pcl_ros::transformPointCloud (*cloud_in, *cloud_transform, shift_cloud);
 
-    int range_x = int(max_point.x-min_point.x+1.0);
-    int range_y = int(max_point.y-min_point.y+1.0);
+    for (int i=0; i<cloud_transform->size(); i++)
+    {
+        grid_map_->InsertXYZI_with_origin(cloud_transform->points[i], i);
+    }
 
-    grid_map_ = new Grid(range_x, range_y, 0, RES, min_point.x, min_point.y);
+    cloud_gridmap = grid_map_->find_vertical_feature(cloud_in);
+
+    std::cout<<"cloud in size: "<<cloud_in->size()<<std::endl;
+
+//    for (int lb=0; lb<cloud_gridmap->size(); lb++)
+//    {
+//        pcl::PointXYZI pt_on_map;
+//        if (cloud_gridmap->points[lb].z>0.0)
+//        {
+//            pt_on_map=cloud_gridmap->points[lb];
+//            cloud_grid->push_back(pt_on_map);
+//        }
+//    }
+
+    pcl_ros::transformPointCloud(*cloud_gridmap, *cloud_gridmap, shift_back_cloud);
+
+    sensor_msgs::PointCloud2 outputn, outputm;
+    pcl::toROSMsg (*cloud_gridmap, outputn);
+    outputn.header.stamp = ros::Time::now();
+    outputn.header.frame_id = "iMiev/base_link";
+    pub.publish (outputn);
+
+    pcl::toROSMsg (*cloud_in, outputm);
+    outputm.header.stamp = ros::Time::now();
+    outputm.header.frame_id = "iMiev/base_link";
+    pub_object.publish (outputm);
+    std::cout<<"points left: "<<cloud_gridmap->size()<<" in "<<time.toc()<<" ms."<<std::endl;
+    grid_map_->ClearGrid();
 }
 
 int
 main (int argc, char** argv)
 {
-  // Initialize ROS
-  ros::init (argc, argv, "pointcloud_filter_road");
-  ros::NodeHandle nh;  
-
-  nh.param("view_imu", view_imu, false);
-
-  // Create a ROS subscriber for the input point cloud
-  ros::Subscriber sub = nh.subscribe ("cloud_input", 1, cloud_cb);
-  //ros::Subscriber sub_odom = nh.subscribe ("/icp_odom", 1, odom_cb);
-
-  // Create a ROS publisher for the output point cloud
-  pub = nh.advertise<sensor_msgs::PointCloud2> ("/road_map", 1);
-  pub_object = nh.advertise<sensor_msgs::PointCloud2> ("/object_on_road", 1);
-  marker_pub = nh.advertise<visualization_msgs::Marker>("/floor_normal", 10);
-  pub_grid_map = nh.advertise<nav_msgs::OccupancyGrid> ("map", 1);
-
-  tf_listener_ = new tf::TransformListener();
-
-  sorting_neighbour_ = new std::vector<double>;
-  filter_road_ = new std::vector<int>;
-  floor_level_ = new std::vector<std::vector<double>* >;
-  floor_level_->resize(x_max);
-  for (int i=0; i<x_max; i++)
-  {
-      floor_level_->at(i) = new std::vector<double>;
-      floor_level_->at(i)->resize(y_max);
-  }
-
-  icp.setMaximumIterations (30);
-  //icp.setMaxCorrespondenceDistance(0.5);
-  //icp.setTransformationEpsilon (1e-7);
-
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_largemap(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_gridmap(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_grid(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::io::loadPCDFile("/home/smaug/loam_cleantech_filtered.pcd", *cloud_largemap);
-    std::cout<<"map loaded..."<<std::endl;
-
-    pcl::PointXYZI min_point, max_point;
-    pcl::getMinMax3D (*cloud_largemap, min_point, max_point);
-
-    int range_x = int(max_point.x-min_point.x+1.0);
-    int range_y = int(max_point.y-min_point.y+1.0);
-
-    grid_map_ = new Grid(range_x, range_y, 0, RES, min_point.x, min_point.y);
-
-    std::cout<<"map loaded with size: "<<cloud_largemap->size()<<" x: "<<range_x<<" y: "<<range_y<<std::endl;
-
-    for (int i=0; i<cloud_largemap->size(); i++)
-    {
-        grid_map_->InsertXYZI_with_origin(cloud_largemap->points[i], i);
-    }
-
-    cloud_gridmap = grid_map_->find_vertical(cloud_largemap);
-
-//    for (int lc=0; lc<cloud_gridmap->size(); lc++)
-//    {
-//        if (cloud_gridmap->points[lc].z==0.0)
-//        {
-//            cloud_gridmap->points[lc].intensity = 200;
-//        }
-//        else
-//        {
-//            cloud_gridmap->points[lc].intensity = 100;
-//        }
-//    }
-
-    for (int lb=0; lb<cloud_gridmap->size(); lb++)
-    {
-        pcl::PointXYZI pt_on_map;
-        if (cloud_gridmap->points[lb].z>0.0)
-        {
-            pt_on_map=cloud_gridmap->points[lb];
-            cloud_grid->push_back(pt_on_map);
-        }
-    }
-
-    sensor_msgs::PointCloud2 outputn, outputm;
-    pcl::toROSMsg (*cloud_grid, outputn);
-    outputn.header.stamp = ros::Time::now();
-    outputn.header.frame_id = "wheelchair/map";
-    pub.publish (outputn);
-
-    pcl::toROSMsg (*cloud_largemap, outputm);
-    outputm.header.stamp = ros::Time::now();
-    outputm.header.frame_id = "wheelchair/map";
-    pub_object.publish (outputm);
-
-        nav_msgs::OccupancyGrid msg;
-        msg.info.width = range_y/RES;
-        msg.info.height = range_x/RES;
-        msg.info.resolution = RES;
-        msg.header.stamp = ros::Time::now();
-        msg.header.frame_id = "wheelchair/map";
-
-        filter_road_ = grid_map_->getMap();
-
-        //std::cout<<"map size: "<<filter_road_->size()<<std::endl;
-
-        for (int i=0; i<filter_road_->size(); i++)
-        {
-            msg.data.push_back(filter_road_->at(i));
-        }
-
-        pub_grid_map.publish(msg);
+    // Initialize ROS
+    ros::init (argc, argv, "pointcloud_filter_vertical");
+    ros::NodeHandle nh;
 
 
-  // Spin
-  ros::spin ();
+    // Create a ROS subscriber for the input point cloud
+    ros::Subscriber sub = nh.subscribe ("cloud_input", 1, cloud_cb);
+    //ros::Subscriber sub_odom = nh.subscribe ("/icp_odom", 1, odom_cb);
+
+    // Create a ROS publisher for the output point cloud
+    pub = nh.advertise<sensor_msgs::PointCloud2> ("/vertical_points", 1);
+    pub_object = nh.advertise<sensor_msgs::PointCloud2> ("/object_on_road", 1);
+    marker_pub = nh.advertise<visualization_msgs::Marker>("/floor_normal", 10);
+    pub_grid_map = nh.advertise<nav_msgs::OccupancyGrid> ("map", 1);
+
+    tf_listener_ = new tf::TransformListener();
+
+    shift_cloud.setOrigin(tf::Vector3(50.0, 50.0, 0.0));
+    shift_cloud.setRotation(tf::Quaternion(0.0, 0.0, 0.0, 1.0));
+    shift_back_cloud.setOrigin(tf::Vector3(-50.0, -50.0, 0.0));
+    shift_back_cloud.setRotation(tf::Quaternion(0.0, 0.0, 0.0, 1.0));
+
+    grid_map_ = new Grid(100, 100, 0, RES, 0.0, 0.0);
+
+
+    // Spin
+    ros::spin ();
 }
 

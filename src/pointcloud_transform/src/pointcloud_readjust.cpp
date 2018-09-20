@@ -24,7 +24,7 @@ int
 main (int argc, char** argv)
 {
   // Initialize ROS
-  ros::init (argc, argv, "my_pcl_tutorial");
+  ros::init (argc, argv, "pointcloud_readjust");
   ros::NodeHandle nh;
 
   // Create a ROS subscriber for the input point cloud
