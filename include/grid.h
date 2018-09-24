@@ -615,7 +615,8 @@ public:
                         }
                         if (vertical_content/vertical_box.size()>=0.5)
                         {
-                            cell.z= vertical_content/vertical_box.size();
+                            //cell.z= vertical_content/vertical_box.size();
+				cell.z = 0.0;
 				cloud_3->push_back(cell);
                         }
                         else

@@ -102,14 +102,14 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
     sensor_msgs::PointCloud2 outputn, outputm;
     pcl::toROSMsg (*cloud_gridmap, outputn);
-    outputn.header.stamp = ros::Time::now();
+    outputn.header.stamp = input->header.stamp;
     outputn.header.frame_id = "iMiev/base_link";
     pub.publish (outputn);
 
-    pcl::toROSMsg (*cloud_in, outputm);
-    outputm.header.stamp = ros::Time::now();
-    outputm.header.frame_id = "iMiev/base_link";
-    pub_object.publish (outputm);
+//    pcl::toROSMsg (*cloud_in, outputm);
+//    outputm.header.stamp = ros::Time::now();
+//    outputm.header.frame_id = "iMiev/base_link";
+//    pub_object.publish (outputm);
     std::cout<<"points left: "<<cloud_gridmap->size()<<" in "<<time.toc()<<" ms."<<std::endl;
     grid_map_->ClearGrid();
 }
@@ -127,10 +127,10 @@ main (int argc, char** argv)
     //ros::Subscriber sub_odom = nh.subscribe ("/icp_odom", 1, odom_cb);
 
     // Create a ROS publisher for the output point cloud
-    pub = nh.advertise<sensor_msgs::PointCloud2> ("/vertical_points", 1);
-    pub_object = nh.advertise<sensor_msgs::PointCloud2> ("/object_on_road", 1);
-    marker_pub = nh.advertise<visualization_msgs::Marker>("/floor_normal", 10);
-    pub_grid_map = nh.advertise<nav_msgs::OccupancyGrid> ("map", 1);
+    pub = nh.advertise<sensor_msgs::PointCloud2> ("vertical_points", 1);
+//    pub_object = nh.advertise<sensor_msgs::PointCloud2> ("/object_on_road", 1);
+//    marker_pub = nh.advertise<visualization_msgs::Marker>("/floor_normal", 10);
+//    pub_grid_map = nh.advertise<nav_msgs::OccupancyGrid> ("map", 1);
 
     tf_listener_ = new tf::TransformListener();
 
