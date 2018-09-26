@@ -62,7 +62,7 @@
 
 <!-- launch path loop -->
 
-	<node pkg="motion_indicators" type="path_loop" name="path_loop" output="screen"/>
+	<!-- node pkg="motion_indicators" type="path_loop" name="path_loop" output="screen"/ -->
 
 	
 </launch>
