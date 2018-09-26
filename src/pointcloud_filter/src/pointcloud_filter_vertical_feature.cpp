@@ -50,6 +50,8 @@ double a, b, c, d, norm;
 double p_a, p_b, p_c, p_d, p_norm;
 int change, min_neighbour, iteration;
 
+double filter_radius_;
+
 tf::Transform shift_cloud, shift_back_cloud;
 
 tf::TransformListener *tf_listener_;
@@ -120,7 +122,11 @@ main (int argc, char** argv)
     // Initialize ROS
     ros::init (argc, argv, "pointcloud_filter_vertical");
     ros::NodeHandle nh;
+    ros::NodeHandle priv_nh("~");
 
+    filter_radius_ = 50.0;
+
+    priv_nh.getParam("filter_radius", filter_radius_);
 
     // Create a ROS subscriber for the input point cloud
     ros::Subscriber sub = nh.subscribe ("cloud_input", 1, cloud_cb);
@@ -134,12 +140,12 @@ main (int argc, char** argv)
 
     tf_listener_ = new tf::TransformListener();
 
-    shift_cloud.setOrigin(tf::Vector3(50.0, 50.0, 0.0));
+    shift_cloud.setOrigin(tf::Vector3(filter_radius_, filter_radius_, 0.0));
     shift_cloud.setRotation(tf::Quaternion(0.0, 0.0, 0.0, 1.0));
-    shift_back_cloud.setOrigin(tf::Vector3(-50.0, -50.0, 0.0));
+    shift_back_cloud.setOrigin(tf::Vector3(-filter_radius_, -filter_radius_, 0.0));
     shift_back_cloud.setRotation(tf::Quaternion(0.0, 0.0, 0.0, 1.0));
 
-    grid_map_ = new Grid(100, 100, 0, RES, 0.0, 0.0);
+    grid_map_ = new Grid(filter_radius_*2, filter_radius_*2, 0, RES, 0.0, 0.0);
 
 
     // Spin

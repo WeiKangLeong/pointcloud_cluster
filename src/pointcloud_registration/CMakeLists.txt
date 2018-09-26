@@ -17,12 +17,14 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   tf_conversions
-  tf2
-  tf2_geometry_msgs
-  tf2_msgs
-  tf2_ros
   visualization_msgs
+  message_filters
+  std_srvs
+  dynamic_reconfigure
 )
+
+find_package(Boost REQUIRED)
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -116,7 +118,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES pointcloud_registration
-#  CATKIN_DEPENDS nav_msgs pcl_conversions pcl_ros roscpp sensor_msgs std_msgs tf tf_conversions visualization_msgs
+  CATKIN_DEPENDS roscpp nav_msgs dynamic_reconfigure tf std_srvs
 #  DEPENDS system_lib
 )
 
@@ -129,6 +131,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -152,6 +155,8 @@ add_executable (show_map src/show_map.cpp)
 target_link_libraries(show_map ${catkin_LIBRARIES})
 add_executable (icp_globalize src/icp_global_localization.cpp)
 target_link_libraries(icp_globalize ${catkin_LIBRARIES})
+#add_executable (icp_node src/icp_node.cpp)
+#target_link_libraries (icp_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 
 ## Rename C++ executable without prefix

@@ -412,7 +412,7 @@ main (int argc, char** argv)
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_largemap(new pcl::PointCloud<pcl::PointXYZI>);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_gridmap(new pcl::PointCloud<pcl::PointXYZI>);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_grid(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::io::loadPCDFile("/home/smaug/loam_cleantech_filtered.pcd", *cloud_largemap);
+    pcl::io::loadPCDFile("/home/smaug/loam_stk.pcd", *cloud_largemap);
     std::cout<<"map loaded..."<<std::endl;
 
     pcl::PointXYZI min_point, max_point;
