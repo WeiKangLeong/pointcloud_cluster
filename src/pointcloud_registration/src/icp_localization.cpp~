@@ -461,7 +461,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
                         global_frame_id_, odom_frame_id_);
         tfb->sendTransform(tmp_tf_stamped);
         */
-        tf::StampedTransform odom_transform_stamped(transform, ros::Time::now(), global_frame_id_, base_frame_id_);
+        tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, global_frame_id_, base_frame_id_);
         tfb->sendTransform(odom_transform_stamped);
 
         }

@@ -42,6 +42,7 @@
 	<node pkg = "pointcloud_filter" type="pointcloud_filter_vertical_feature" name="filter_vertical_feature">
 		<remap from = "cloud_input" to = "/rslidar_points" />
 		<remap from = "vertical_points" to = "/iMiev/pcl_pointnormal_out" />
+		<param name = "base_frame" value = "base_link" />
 	</node>
 
 <!--	<node pkg="amcl_pc" type="amcl" name="amcl_pc" output="screen">
