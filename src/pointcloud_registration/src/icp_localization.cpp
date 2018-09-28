@@ -387,11 +387,13 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         std::cout<<"x: "<<new_nav_position.x()<<" y: "<<new_nav_position.y()<<" z: "<<new_nav_position.z()<<std::endl;
         std::cout<<"R: "<<r<<" P: "<<p<<" Y: "<<y<<std::endl;
         input_odom.header.frame_id = global_frame_id_;
+        input_odom.header.stamp = input->header.stamp;
 
         pub_icp_odom.publish(input_odom);
 
         geometry_msgs::PoseWithCovarianceStamped icp_pose;
         icp_pose.header = input_odom.header;
+        icp_pose.header.stamp = input->header.stamp;
         icp_pose.pose = input_odom.pose;
 
         pub_localize.publish(icp_pose);
@@ -461,8 +463,9 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
                         global_frame_id_, odom_frame_id_);
         tfb->sendTransform(tmp_tf_stamped);
         */
-        tf::StampedTransform odom_transform_stamped(transform, ros::Time::now(), global_frame_id_, base_frame_id_);
-        tfb->sendTransform(odom_transform_stamped);
+
+        //tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, global_frame_id_, base_frame_id_);
+        //tfb->sendTransform(odom_transform_stamped);
 
         }
 

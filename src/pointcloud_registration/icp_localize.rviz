@@ -7,7 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /Odometry1
-        - /Odometry1/Status1
         - /Odometry2
       Splitter Ratio: 0.5
     Tree Height: 775
@@ -293,7 +292,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: wheelchair/map
+    Fixed Frame: iMiev/map
     Frame Rate: 30
   Name: root
   Tools:
@@ -314,22 +313,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 100.498
+      Distance: 1661.22
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 18.5708
-        Y: -23.0534
-        Z: 1.67278
+        X: 251.41
+        Y: 474.391
+        Z: -83.4154
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.4598
+      Pitch: 1.5698
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.5004
+      Yaw: 1.18041
     Saved: ~
 Window Geometry:
   Displays:

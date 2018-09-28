@@ -155,8 +155,8 @@ add_executable (show_map src/show_map.cpp)
 target_link_libraries(show_map ${catkin_LIBRARIES})
 add_executable (icp_globalize src/icp_global_localization.cpp)
 target_link_libraries(icp_globalize ${catkin_LIBRARIES})
-#add_executable (icp_node src/icp_node.cpp)
-#target_link_libraries (icp_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_executable (icp_node src/icp_node.cpp)
+target_link_libraries (icp_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 
 ## Rename C++ executable without prefix

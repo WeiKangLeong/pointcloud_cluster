@@ -2,12 +2,10 @@
 	<arg name="map_location" default="$(find pointcloud_registration)/map/loam_cleantech_filtered.pcd" />
 	<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find pointcloud_registration)/cetran_velodyne.rviz" />
 
-<!-- LAUNCH RSLIDAR DRIVER HERE -->
+<!-- LAUNCH RSLIDAR DRIVER HERE 
 	<node  name="rslidar_node" pkg="rslidar_driver" type="rslidar_node" output="screen" >
 		<param name="model" value="RS32"/>
-		<!--param name="pcap" value="path_to_pcap"/-->
 		<param name="device_ip" value="192.168.200.204"/>
-		<!-- Set the Lidar data port on the PC side, default is 6699 -->
 		<param name="port" value="3207"/>
 	</node>
 
@@ -19,7 +17,7 @@
 		<param name="curves_rate_path" value="$(find rslidar_pointcloud)/ConfigrationFiles/CurveRate.csv" />
 
 	</node>
-
+-->
 <!--	IF USING 3D LOCALIZATION WITH 3D LIDAR-->
 
 	<node pkg="pointcloud_registration" type="icp_localize" name="icp_localize" output="screen">
