@@ -20,7 +20,7 @@
 -->
 <!--	IF USING 3D LOCALIZATION WITH 3D LIDAR-->
 
-	<node pkg="pointcloud_registration" type="icp_localize" name="icp_localize" output="screen">
+	<node pkg="pointcloud_registration" type="icp_node" name="icp_localize" output="screen">
 		<param name="map_location" value="$(arg map_location)" />
 		<param name="base_frame_id" value="iMiev/base_link" />
 		<param name="odom_frame_id" value="iMiev/odom" />
