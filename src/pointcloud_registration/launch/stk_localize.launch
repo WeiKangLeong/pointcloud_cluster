@@ -32,9 +32,9 @@
 	<remap from ="scan" to ="/top_scan_filtered" />
 	<remap from="pc" to="pcl_pointnormal_out" />
 	<param name="laser_model_type" value="pc_likelihood_field" />
-	<param name="odom_frame_id" value="/odom" />
-	<param name="base_frame_id" value="/base_link" />
-	<param name="global_frame_id" value="/map" />
+	<param name="odom_frame_id" value="odom" />
+	<param name="base_frame_id" value="base_link" />
+	<param name="global_frame_id" value="map" />
 </node>
 -->
 <!-- map server for 2d grid cell map 

@@ -6,7 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Odometry1/Status1
+        - /PointCloud22
+        - /Path1
       Splitter Ratio: 0.5
     Tree Height: 463
   - Class: rviz/Selection
@@ -27,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: map
+    SyncSource: PointCloud2
 Visualization Manager:
   Class: ""
   Displays:
@@ -104,7 +105,7 @@ Visualization Manager:
       Size (Pixels): 2
       Size (m): 0.1
       Style: Squares
-      Topic: /cloud_filter
+      Topic: /pcl_pointnormal_out
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -112,8 +113,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 7.51654
-        Min Value: -3.58211
+        Max Value: 6.13603
+        Min Value: -3.20711
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -285,7 +286,7 @@ Visualization Manager:
       Radius: 0.03
       Shaft Diameter: 0.1
       Shaft Length: 0.1
-      Topic: /wheelchair/3d_plan
+      Topic: /route_plan
       Unreliable: false
       Value: true
     - Alpha: 0.7
@@ -335,7 +336,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 329.225
+      Distance: 300.968
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -347,10 +348,10 @@ Visualization Manager:
         Z: -31.9338
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.5298
+      Pitch: 1.5698
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.99316
+      Yaw: 3.10816
     Saved: ~
 Window Geometry:
   Displays:
