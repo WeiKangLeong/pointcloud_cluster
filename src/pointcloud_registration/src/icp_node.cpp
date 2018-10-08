@@ -216,6 +216,7 @@ ICPNode::ICPNode()
 
     chance_ = 0;
     odom_start_ = false;
+    location_confirm_ = false;
 
     transform.setOrigin(tf::Vector3(0.0,0.0,0.0));
     transform.setRotation(tf::Quaternion(0.0,0.0,0.0,1.0));
@@ -575,6 +576,17 @@ void ICPNode::pointcloud_cb_ (const sensor_msgs::PointCloud2ConstPtr& input)
         transform2.setRotation(tfqt);
 
         transform = transform * transform2;
+
+        tf::StampedTransform align_baselink;
+
+        try{
+            tf_->lookupTransform(base_frame_id_, input->header.frame_id, ros::Time(0), align_baselink);
+        }catch (tf::TransformException &ex) {
+            ROS_ERROR("Lookup transform for %s and %s failed", base_frame_id_.c_str(), input->header.frame_id.c_str());
+            return;
+        }
+
+        transform = transform * align_baselink;
 
         double r, p, y;
         tf::Matrix3x3(transform.getRotation()).getRPY(r, p, y);

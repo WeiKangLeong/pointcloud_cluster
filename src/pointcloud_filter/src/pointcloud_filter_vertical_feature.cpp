@@ -104,6 +104,17 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
     pcl_ros::transformPointCloud(*cloud_gridmap, *cloud_gridmap, shift_back_cloud);
 
+    tf::StampedTransform align_baselink;
+
+    try{
+        tf_listener_->lookupTransform(base_frame_, input->header.frame_id, ros::Time(0), align_baselink);
+    }catch (tf::TransformException &ex) {
+        ROS_ERROR("Lookup transform for %s and %s failed", base_frame_.c_str(), input->header.frame_id.c_str());
+        return;
+    }
+
+    pcl_ros::transformPointCloud(*cloud_gridmap, *cloud_gridmap, align_baselink);
+
     sensor_msgs::PointCloud2 outputn, outputm;
     pcl::toROSMsg (*cloud_gridmap, outputn);
     outputn.header.stamp = input->header.stamp;

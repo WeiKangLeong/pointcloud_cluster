@@ -46,8 +46,7 @@
 		<param name = "base_frame" value = "iMiev/base_link" />
 	</node>
 
-<!---->	<node pkg="amcl_pc" type="amcl" name="amcl_pc" output="screen">
-		<!--remap from="scan" to="/iMiev/front_top_scan"/>-->
+	<node pkg="amcl_pc" type="amcl" name="amcl_pc" output="screen">
 		<remap from="pc" to="/iMiev/pcl_pointnormal_out"/>
 		<param name="odom_frame_id" value="iMiev/odom" />
 		<param name="base_frame_id" value="iMiev/base_link" />
@@ -55,7 +54,31 @@
 		<param name="laser_model_type" value="pc_likelihood_field" />
 	</node>
 
+<!--    IF USING 2D LOCALIZATION WITH 2D LIDAR 
 
+	<node pkg="amcl_pc" type="amcl" name="amcl_pc" output="screen">
+		<remap from="scan" to="/iMiev/front_top_scan"/>
+		<remap from="pc" to="/iMiev/pcl_pointnormal_out"/>
+		<param name="odom_frame_id" value="iMiev/odom" />
+		<param name="base_frame_id" value="iMiev/base_link" />
+		<param name="global_frame_id" value="iMiev/map" />
+		<param name="laser_model_type" value="pc_likelihood_field" />
+	</node>
+
+	<node pkg="norm_virtual_sensor" type = "norm_virtual_sensor" name="norm_virtual_sensor" output = "screen">
+		<remap from = "scan_in" to="/iMiev/front_top_scan" />
+		<remap from = "pcl_pointnormal_out" to = "/iMiev/pcl_pointnormal_out" />
+		<param name = "odom_frame_id" value="iMiev/odom" />
+		<param name = "baselink_frame_id" value="iMiev/base_link" />
+		<param name = "odom_baselink_frame_id" value="iMiev/odom_baselink" />
+	</node>
+
+	<node pkg="norm_virtual_sensor" type="odom_baselink" name="odom_baselink" output = "screen">
+		<param name = "odom_frame_id" value="iMiev/odom" />
+		<param name = "baselink_frame_id" value = "iMiev/odom_baselink" />
+		<remap from = "odom" to = "iMiev/odom" />
+	</node>
+-->
 	<node pkg="map_server" type="map_server" name="grid_cell_map" args="$(find pointcloud_registration)/map/newmap.yaml">
 		<param name="frame_id" value="iMiev/map" />
 	</node>
