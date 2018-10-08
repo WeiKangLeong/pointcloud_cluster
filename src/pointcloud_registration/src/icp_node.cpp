@@ -547,7 +547,15 @@ void ICPNode::pointcloud_cb_ (const sensor_msgs::PointCloud2ConstPtr& input)
 
         if (location_confirm_)
         {
-            //pcl_ros::transformPointCloud (*cloud_in, *cloud_transform, transform);
+            tf::StampedTransform lidar_baselink;
+
+            try{
+                tf_->lookupTransform(base_frame_id_, input->header.frame_id, ros::Time(0), lidar_baselink);
+            }catch (tf::TransformException &ex) {
+                ROS_ERROR("Lookup transform for %s and %s failed", base_frame_id_.c_str(), input->header.frame_id.c_str());
+                return;
+            }
+            pcl_ros::transformPointCloud (*cloud_in, *cloud_in, lidar_baselink);
         voxel_filter.setLeafSize (icp_filter_size_, icp_filter_size_, icp_filter_size_);
         voxel_filter.setInputCloud (cloud_in);
         voxel_filter.filter (*cloud_transform);
@@ -577,22 +585,9 @@ void ICPNode::pointcloud_cb_ (const sensor_msgs::PointCloud2ConstPtr& input)
 
         transform = transform * transform2;
 
-        tf::StampedTransform lidar_baselink;
 
-        try{
-            tf_->lookupTransform(base_frame_id_, input->header.frame_id, ros::Time(0), lidar_baselink);
-        }catch (tf::TransformException &ex) {
-            ROS_ERROR("Lookup transform for %s and %s failed", base_frame_id_.c_str(), input->header.frame_id.c_str());
-            return;
-        }
 
-        tf::Transform align_baselink;
-        tf::Vector3 remove_height;
-        remove_height = lidar_baselink.getOrigin();
-        align_baselink.setOrigin(tf::Vector3(remove_height.x(), remove_height.y(), 0.0));
-        align_baselink.setRotation(lidar_baselink.getRotation());
 
-        transform = transform * align_baselink;
 
         double r, p, y;
         tf::Matrix3x3(transform.getRotation()).getRPY(r, p, y);
