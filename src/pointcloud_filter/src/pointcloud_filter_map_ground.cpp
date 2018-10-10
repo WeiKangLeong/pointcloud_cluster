@@ -63,6 +63,9 @@ std::vector<double>* sorting_neighbour_;
 std::vector<int>* filter_road_;
 std::vector<std::vector<double>* >* floor_level_;
 
+std::string map_frame_, map_location_;
+double resolution_;
+
 tf::TransformListener *tf_listener_;
 
 void find_a_plane()
@@ -378,10 +381,13 @@ int
 main (int argc, char** argv)
 {
   // Initialize ROS
-  ros::init (argc, argv, "pointcloud_filter_road");
+  ros::init (argc, argv, "pointcloud_filter_map");
   ros::NodeHandle nh;  
+  ros::NodeHandle priv_nh("~");
 
-  nh.param("view_imu", view_imu, false);
+  priv_nh.getParam("map_location", map_location_);
+  priv_nh.getParam("map_frame", map_frame_);
+  priv_nh.getParam("resolution", resolution_);
 
   // Create a ROS subscriber for the input point cloud
   ros::Subscriber sub = nh.subscribe ("cloud_input", 1, cloud_cb);
@@ -412,8 +418,8 @@ main (int argc, char** argv)
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_largemap(new pcl::PointCloud<pcl::PointXYZI>);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_gridmap(new pcl::PointCloud<pcl::PointXYZI>);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_grid(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::io::loadPCDFile("/home/smaug/loam_stk.pcd", *cloud_largemap);
-    std::cout<<"map loaded..."<<std::endl;
+    pcl::io::loadPCDFile(map_location_, *cloud_largemap);
+    std::cout<<"map loaded...in "<<map_location_<<" with a frame: "<<map_frame_<<std::endl;
 
     pcl::PointXYZI min_point, max_point;
     pcl::getMinMax3D (*cloud_largemap, min_point, max_point);
@@ -421,7 +427,7 @@ main (int argc, char** argv)
     int range_x = int(max_point.x-min_point.x+1.0);
     int range_y = int(max_point.y-min_point.y+1.0);
 
-    grid_map_ = new Grid(range_x, range_y, 0, RES, min_point.x, min_point.y);
+    grid_map_ = new Grid(range_x, range_y, 0, resolution_, min_point.x, min_point.y);
 
     std::cout<<"map loaded with size: "<<cloud_largemap->size()<<" x: "<<range_x<<" y: "<<range_y<<std::endl;
 
@@ -457,20 +463,20 @@ main (int argc, char** argv)
     sensor_msgs::PointCloud2 outputn, outputm;
     pcl::toROSMsg (*cloud_grid, outputn);
     outputn.header.stamp = ros::Time::now();
-    outputn.header.frame_id = "wheelchair/map";
+    outputn.header.frame_id = map_frame_;
     pub.publish (outputn);
 
     pcl::toROSMsg (*cloud_largemap, outputm);
     outputm.header.stamp = ros::Time::now();
-    outputm.header.frame_id = "wheelchair/map";
+    outputm.header.frame_id = map_frame_;
     pub_object.publish (outputm);
 
         nav_msgs::OccupancyGrid msg;
-        msg.info.width = range_y/RES;
-        msg.info.height = range_x/RES;
-        msg.info.resolution = RES;
+        msg.info.width = range_y/resolution_;
+        msg.info.height = range_x/resolution_;
+        msg.info.resolution = resolution_;
         msg.header.stamp = ros::Time::now();
-        msg.header.frame_id = "wheelchair/map";
+        msg.header.frame_id = map_frame_;
 
         filter_road_ = grid_map_->getMap();
 
