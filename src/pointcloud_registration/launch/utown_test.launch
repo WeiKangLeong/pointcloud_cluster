@@ -13,7 +13,7 @@
 		<param name="icp_iteration" value="5" />
 		<param name="icp_distance" value="2.0" />
 		<param name="icp_filter_size" value="0.5" />
-		<remap from="input" to="/rslidar_points" />
+		<remap from="input" to="/wheelchair/velodyne_points" />
 	</node>
 
 	<node pkg="pointcloud_registration" type="show_map" name="show_map" output="screen">
