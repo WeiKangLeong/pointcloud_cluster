@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node  name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find pointcloud_registration)/map/newmap.yaml">
+    <remap from="/map" to="/map_mask"/>
+  </node>
+
+
+  <node  name="mask_filter" pkg="pointcloud_filter" type="pointcloud_filter_mask" output="screen">
+    <remap from="cloud_out" to="/cloud_map"/>
+  </node>
+  
+
+</launch>
