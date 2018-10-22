@@ -116,11 +116,14 @@ class ICP_scan_matchNode
     ros::Publisher pub_input_odom_;
     ros::Publisher pub_minimap_;
     ros::Publisher pub_aligned_;
+    ros::Publisher pub_initialized_;
 
     int chance_;
     int icp_max_iter_;
     double icp_max_distance_;
     double icp_filter_size_;
+
+    double roll, pitch, yaw;
 
     bool location_confirm_, odom_start_, start;
 
@@ -140,6 +143,8 @@ class ICP_scan_matchNode
     pcl::RadiusOutlierRemoval<pcl::PointXYZ> outrem;
 
     tf::Transform transform, vehicle_pose, offset_transform, prev_odom_transform;
+
+    geometry_msgs::PoseWithCovarianceStamped global_initialize_;
 
 };
 
@@ -172,6 +177,7 @@ ICP_scan_matchNode::ICP_scan_matchNode()
   pub_input_odom_ = nh_.advertise <nav_msgs::Odometry> ("input_odom", 1);
   pub_aligned_ = nh_.advertise <sensor_msgs::PointCloud2> ("/velo_cloud", 1);
   pub_minimap_ = nh_.advertise <sensor_msgs::PointCloud2> ("/minimap", 1);
+  pub_initialized_ = nh_.advertise <geometry_msgs::PoseWithCovarianceStamped> ("initialpose", 1);
 
   ros::NodeHandle priv_nh("~");
 
@@ -206,7 +212,80 @@ ICP_scan_matchNode::ICP_scan_matchNode()
     transform.setOrigin(tf::Vector3(0.0,0.0,0.0));
     transform.setRotation(tf::Quaternion(0.0,0.0,0.0,1.0));
 
-    grid_map_ = new Grid(filter_radius_*2, filter_radius_*2, 0, RES, 0.0, 0.0);
+
+}
+
+void ICP_scan_matchNode::initial_pose_cb_(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& posing)
+{
+    geometry_msgs::PoseWithCovarianceStamped initial;
+    initial = *posing;
+    tf::Quaternion initial_rotation;
+
+    tf::quaternionMsgToTF(initial.pose.pose.orientation, initial_rotation);
+
+    double ra,pa,ya;
+    vehicle_pose.setOrigin(tf::Vector3(initial.pose.pose.position.x,initial.pose.pose.position.y,initial.pose.pose.position.z));
+    vehicle_pose.setRotation(initial_rotation.normalize());
+    transform = vehicle_pose;
+    tf::Matrix3x3(transform.getRotation()).getRPY(ra, pa, ya);
+
+    std::cout<<"I have added a new pose at X: "<<initial.pose.pose.position.x<<" Y "<<initial.pose.pose.position.y<<
+               " z "<<initial.pose.pose.position.z<<std::endl;
+    std::cout<<"with a heading of R: "<<ra<<" P "<<pa<<" Y "<<ya<<std::endl;
+
+    if (start){
+
+        pcl::console::TicToc time;
+        time.tic ();
+        Eigen::Matrix4f transformation_matrix;
+        transformation_matrix = localize();
+
+        double translation_x, translation_y, translation_z;
+        translation_x = transformation_matrix(0,3);
+        translation_y = transformation_matrix(1,3);
+        translation_z = transformation_matrix(2,3);
+
+        tf::Matrix3x3 tf3d;
+        tf3d.setValue(static_cast<double>(transformation_matrix(0,0)), static_cast<double>(transformation_matrix(0,1)), static_cast<double>(transformation_matrix(0,2)),
+            static_cast<double>(transformation_matrix(1,0)), static_cast<double>(transformation_matrix(1,1)), static_cast<double>(transformation_matrix(1,2)),
+            static_cast<double>(transformation_matrix(2,0)), static_cast<double>(transformation_matrix(2,1)), static_cast<double>(transformation_matrix(2,2)));
+
+        tf::Quaternion tfqt,rotate;
+        //tf3d.getRotation(tfqt);
+        tf3d.getRPY (roll,pitch,yaw);
+        //tf3d.setRPY (0.0, pitch, yaw);
+        tf3d.getRotation(tfqt);
+
+        tf::Transform transform2;
+        transform2.setOrigin(tf::Vector3(translation_x, translation_y, translation_z));
+        transform2.setRotation(tfqt);
+
+        transform = transform * transform2;
+
+        sensor_msgs::PointCloud2 output2;
+        pcl_ros::transformPointCloud (*cloud_in, *final_cloud, transform);
+
+        pcl::toROSMsg (*final_cloud, output2);
+        output2.header.frame_id = global_frame_id_;
+        pub_aligned_.publish(output2);
+
+        tf::Vector3 final_pose;
+        final_pose = transform.getOrigin();
+        global_initialize_.pose.pose.position.x = final_pose.x();
+        global_initialize_.pose.pose.position.y = final_pose.y();
+        global_initialize_.pose.pose.position.z = final_pose.z();
+        tf::Quaternion final_orientation;
+        final_orientation = transform.getRotation();
+        tf::quaternionTFToMsg(final_orientation, global_initialize_.pose.pose.orientation);
+
+        global_initialize_.header.frame_id = global_frame_id_;
+
+        pub_initialized_.publish(global_initialize_);
+
+        std::cout<<"pointcloud callback end... in " << time.toc () << " ms"<<std::endl;
+
+        ros::shutdown();
+    }
 
 }
 
@@ -264,7 +343,7 @@ Eigen::Matrix4f ICP_scan_matchNode::localize()
 
     tf::Transform origin_tf = transform.inverse();
 
-    pcl_ros::transformPointCloud (*cloud_minimap, *map_origin, origin_tf);
+    pcl_ros::transformPointCloud (*cloud_largemap, *map_origin, origin_tf);
 
     //std::cout<<cloud_transform->size()<<" "<<map_origin->size()<<std::endl;
     double score, second_score;
@@ -282,53 +361,7 @@ Eigen::Matrix4f ICP_scan_matchNode::localize()
     score=icp.getFitnessScore();
     compare_matrix = icp.getFinalTransformation ();
 
-    second_score = sqrt(compare_matrix(0,3)*compare_matrix(0,3)+compare_matrix(1,3)*compare_matrix(1,3)+compare_matrix(2,3)*compare_matrix(2,3));
-
     std::cout << "ICP X: " << compare_matrix(0,3)<< " Y: " << compare_matrix(1,3)<< " Z: " << compare_matrix(2,3)<< std::endl;
-    std::cout << "odomX: " << difference_pose.x()<< " Y: " << difference_pose.y()<< " Z: " << difference_pose.z()<< std::endl;
-
-    if (difference_pose.x()+difference_pose.y()==0.0)
-    {
-        second_score = 0.0;
-    }
-    std::cout << "second_score = "<< second_score<<std::endl;
-
-    if (chance_==5)
-    {
-        compare_matrix=use_odom;
-        std::cout<<"observe..."<<std::endl;
-        chance_=0;
-    }
-    else if (chance_==4)
-    {
-        std::cout<<"I think we can give him a chance"<<std::endl;
-        chance_++;
-    }
-    else if (score<0.5 && second_score<0.5)
-    {
-        std::cout<<"I think it is a good icp"<<std::endl;
-    }
-    else if (score<0.5)
-    {
-        chance_++;
-        std::cout<<"Icp ok for "<<chance_<<" times"<<std::endl;
-        //compare_matrix(2,3)=0.0;
-        compare_matrix=use_odom;
-        std::cout<<"using odom info..."<<std::endl;
-    }
-
-//    else if (score>0.7 || second_score>2.0)
-//    {
-//        compare_matrix=use_odom;
-//        std::cout<<"using odom info..."<<std::endl;
-//    }
-
-    else
-    {
-        chance_=0;
-        compare_matrix=use_odom;
-        std::cout<<"using odom info..."<<std::endl;
-    }
 
     std::cout << "Applied iterations with " <<score<< std::endl;
 
@@ -337,12 +370,8 @@ Eigen::Matrix4f ICP_scan_matchNode::localize()
 
 void ICP_scan_matchNode::pointcloud_cb_ (const sensor_msgs::PointCloud2ConstPtr& input)
 {
-    if (start){
 
-        pcl::console::TicToc time;
-        time.tic ();
         pcl::fromROSMsg (*input, *cloud_in);
-
 
         voxel_filter.setLeafSize (icp_filter_size_, icp_filter_size_, icp_filter_size_);
         voxel_filter.setInputCloud (cloud_in);
@@ -350,38 +379,7 @@ void ICP_scan_matchNode::pointcloud_cb_ (const sensor_msgs::PointCloud2ConstPtr&
         std::cout << "Filtered cloud contains " << cloud_transform->size ()
               << " data points from original point cloud: "<<cloud_in->size() << std::endl;
 
-        transformation_matrix = localize();
 
-        translation_x = transformation_matrix(0,3);
-        translation_y = transformation_matrix(1,3);
-        translation_z = transformation_matrix(2,3);
-
-        tf::Matrix3x3 tf3d;
-        tf3d.setValue(static_cast<double>(transformation_matrix(0,0)), static_cast<double>(transformation_matrix(0,1)), static_cast<double>(transformation_matrix(0,2)),
-            static_cast<double>(transformation_matrix(1,0)), static_cast<double>(transformation_matrix(1,1)), static_cast<double>(transformation_matrix(1,2)),
-            static_cast<double>(transformation_matrix(2,0)), static_cast<double>(transformation_matrix(2,1)), static_cast<double>(transformation_matrix(2,2)));
-
-        tf::Quaternion tfqt,rotate;
-        //tf3d.getRotation(tfqt);
-        tf3d.getRPY (roll,pitch,yaw);
-        //tf3d.setRPY (0.0, pitch, yaw);
-        tf3d.getRotation(tfqt);
-
-        tf::Transform transform2;
-        transform2.setOrigin(tf::Vector3(translation_x, translation_y, translation_z));
-        transform2.setRotation(tfqt);
-
-        transform = transform * transform2;
-
-        sensor_msgs::PointCloud2 output2;
-        pcl_ros::transformPointCloud (*cloud_in, *final_cloud, transform);
-
-        pcl::toROSMsg (*final_cloud, output2);
-        output2.header.frame_id = global_frame_id_;
-        pub_aligned_.publish(output2);
-
-        std::cout<<"pointcloud callback end... in " << time.toc () << " ms"<<std::endl;
-    }
 
 }
 

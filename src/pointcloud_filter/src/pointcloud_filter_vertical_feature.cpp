@@ -45,7 +45,7 @@ pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::Point
 
 int x_max, y_max;
 
-bool start, view_imu;
+bool start, view_imu, repeat_;
 double a, b, c, d, norm;
 double p_a, p_b, p_c, p_d, p_norm;
 int change, min_neighbour, iteration;
@@ -72,13 +72,13 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
     pass.setInputCloud (cloud_in);
     pass.setFilterFieldName ("x");
-    pass.setFilterLimits (-50.0, 50.0);
+    pass.setFilterLimits (-filter_radius_, filter_radius_);
     //pass.setFilterLimitsNegative (true);
     pass.filter (*cloud_in);
 
     pass.setInputCloud (cloud_in);
     pass.setFilterFieldName ("y");
-    pass.setFilterLimits (-50.0, 50.0);
+    pass.setFilterLimits (-filter_radius_, filter_radius_);
     pass.filter (*cloud_in);
 
     pcl_ros::transformPointCloud (*cloud_in, *cloud_transform, shift_cloud);
@@ -127,6 +127,11 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 //    pub_object.publish (outputm);
     std::cout<<"points left: "<<cloud_gridmap->size()<<" in "<<time.toc()<<" ms."<<std::endl;
     grid_map_->ClearGrid();
+
+    if (repeat_==false)
+    {
+        ros::shutdown();
+    }
 }
 
 int
@@ -138,9 +143,11 @@ main (int argc, char** argv)
     ros::NodeHandle priv_nh("~");
 
     filter_radius_ = 50.0;
+    repeat_ =true;
 
     priv_nh.getParam("filter_radius", filter_radius_);
     priv_nh.getParam("base_frame", base_frame_);
+    priv_nh.getParam("repeat", repeat_);
 
     // Create a ROS subscriber for the input point cloud
     ros::Subscriber sub = nh.subscribe ("cloud_input", 1, cloud_cb);

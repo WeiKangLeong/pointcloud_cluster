@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <std_msgs/Int8.h>
 
 #include <pcl/console/time.h>
 #include <pcl_ros/transforms.h>
@@ -29,6 +30,9 @@ ros::Publisher pub_floor, pub_static, pub_move;
 tf::TransformListener *tf_listener_;
 
 std::vector<std::vector<int>* >* floor_in_grid_;
+
+std::string map_frame_;
+int filter_integer_;
 
 pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_comeout(new pcl::PointCloud<pcl::PointXYZI>);
 pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZI>);
@@ -94,7 +98,7 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     {
 	sensor_msgs::PointCloud2 output3;
 	pcl::toROSMsg (*cloud_filtered, output3);
-	output3.header.frame_id = "map";
+        output3.header.frame_id = map_frame_;
 	pub_static.publish (output3);
 
         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_rs (new pcl::PointCloud<pcl::PointXYZI>);
@@ -118,7 +122,7 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
         sensor_msgs::PointCloud2 output2;
         pcl::toROSMsg (*cloud_rs, output2);
-        output2.header.frame_id = "rslidar";
+        output2.header.frame_id = input->header.frame_id;
             output2.width = input->width;
             output2.height = input->height;
     //	output2.width = output2.data.size()/32;
@@ -166,7 +170,7 @@ void map_2d_cb(nav_msgs::OccupancyGrid msg)
             {
                 floor_in_grid_->at(i)->at(j) = msg.data[k];
                 k++;
-                if (floor_in_grid_->at(i)->at(j)==0)
+                if (floor_in_grid_->at(i)->at(j)==filter_integer_)
                 {
                     pcl::PointXYZ centroid;
                     centroid.x = j*floor_resolution;
@@ -177,11 +181,11 @@ void map_2d_cb(nav_msgs::OccupancyGrid msg)
             }
         }
 
-        grid_map_->ArrangeFloorandStoreXY(cloud_floor);
+        //grid_map_->ArrangeFloorandStoreXY(cloud_floor);
 
         sensor_msgs::PointCloud2 output;
         pcl::toROSMsg (*cloud_floor, output);
-        output.header.frame_id = "map";
+        output.header.frame_id = map_frame_;
         pub_floor.publish(output);
         std::cout<<cloud_floor->size()<<" points map loaded to pointcloud"<<std::endl;
         cloud_floor.reset(new pcl::PointCloud<pcl::PointXYZ>);
@@ -198,6 +202,12 @@ int main (int argc, char** argv)
     // Initialize ROS
     ros::init (argc, argv, "pointcloud_filter_mask");
     ros::NodeHandle nh;
+    ros::NodeHandle priv_nh("~");
+
+    map_frame_ = "map";
+    filter_integer_ = 0;
+    priv_nh.getParam("map_frame", map_frame_);
+    priv_nh.getParam("filter_integer", filter_integer_);
 
     grid_map_ = new Grid(RANGE_X, RANGE_Y, 0, RES, 0, 0);
 
