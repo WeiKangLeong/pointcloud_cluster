@@ -22,7 +22,7 @@
 	</node>
 
 
-	<node pkg="map_server" type="map_server" name="grid_cell_map" args="$(find pointcloud_registration)/map/utown.yaml" >
+	<node pkg="map_server" type="map_server" name="grid_cell_map" args="$(find pointcloud_registration)/map/utown_map.yaml" >
 		<param name="frame_id" value="wheelchair/map" />
 	</node>
 
