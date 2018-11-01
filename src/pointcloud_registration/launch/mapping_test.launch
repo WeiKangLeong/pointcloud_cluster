@@ -1,0 +1,8 @@
+<launch>
+	<node pkg="pointcloud_registration" type="scan_accumulation" name="icp_map" output="screen" >
+		<param name="odom_frame" value="iMiev/odom" />
+		<param name="base_frame" value="iMiev/base_link" />
+		<param name="map_frame" value="iMiev/map" />
+	</node>
+
+</launch>

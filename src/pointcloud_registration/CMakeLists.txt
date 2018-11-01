@@ -159,6 +159,8 @@ add_executable (icp_node src/icp_node.cpp)
 target_link_libraries (icp_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_executable (scan_matching src/scan_matching.cpp)
 target_link_libraries (scan_matching ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_executable (scan_accumulation src/scan_accumulation.cpp)
+target_link_libraries (scan_accumulation ${catkin_LIBRARIES})
 
 
 ## Rename C++ executable without prefix
