@@ -114,11 +114,20 @@ void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPt
         {
             src_trgt=1;
             pub_target.publish(pcl_output);
+            count_pcl=cloud_no;
         }
         else if (src_trgt==1)
         {
             src_trgt=0;
             pub_source.publish(pcl_output);
+
+            std::cout<<"match between node "<<count_pcl<<" and "<<cloud_no<<" ?"<<std::endl;
+            std::string enter_command;
+            std::cin>>enter_command;
+            if (enter_command.c_str()=="y")
+            {
+
+            }
         }
 
 
@@ -163,7 +172,7 @@ void makeButtonMarker( const tf::Vector3& position, int i)
 //    count_pose++;
 //}
 
-Eigen::Matrix4f localize()
+Eigen::Matrix4f localize(pcl::PointCloud<pcl::PointXYZI>::Ptr source_pcl, pcl::PointCloud<pcl::PointXYZI>::Ptr target_pcl)
 {
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_comeout(new pcl::PointCloud<pcl::PointXYZI>);
 //    pcl::PointCloud<pcl::PointXYZI>::Ptr map_origin(new pcl::PointCloud<pcl::PointXYZI>);
@@ -415,6 +424,10 @@ main (int argc, char** argv)
     prev_odom_transform.setRotation(tf::Quaternion (0.0, 0.0, 0.0, 1.0));
 
     use_odom.setIdentity();
+
+    pcl_node = new std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr >;
+
+    pose_node = new std::vector<nav_msgs::Odometry>;
 
     //ros::Timer frame_timer = nh.createTimer(ros::Duration(0.01), frameCallback);
 
