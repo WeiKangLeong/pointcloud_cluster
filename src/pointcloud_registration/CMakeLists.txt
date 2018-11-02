@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   std_srvs
   dynamic_reconfigure
+  interactive_markers
 )
 
 find_package(Boost REQUIRED)
@@ -118,7 +119,7 @@ find_package(Boost REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES pointcloud_registration
-  CATKIN_DEPENDS roscpp nav_msgs dynamic_reconfigure tf std_srvs
+  CATKIN_DEPENDS roscpp nav_msgs dynamic_reconfigure tf std_srvs interactive_markers message_filters
 #  DEPENDS system_lib
 )
 
