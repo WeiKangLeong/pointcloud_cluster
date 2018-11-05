@@ -106,29 +106,30 @@ void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPt
     {
         case visualization_msgs::InteractiveMarkerFeedback::BUTTON_CLICK:
           ROS_INFO_STREAM( s.str() << ": button click" << mouse_point_ss.str() << "." );
+          sensor_msgs::PointCloud2 pcl_output;
+          pcl::toROSMsg (*pcl_node->at(cloud_no), pcl_output);
+          pcl_output.header.frame_id = odom_frame_id_;
+          if (src_trgt==0)
+          {
+              src_trgt=1;
+              pub_target.publish(pcl_output);
+              count_pcl=cloud_no;
+          }
+          else if (src_trgt==1)
+          {
+              src_trgt=0;
+              pub_source.publish(pcl_output);
+
+              std::cout<<"match between node "<<count_pcl<<" and "<<cloud_no<<" ?"<<std::endl;
+              std::string enter_command;
+              std::cin>>enter_command;
+              if (enter_command.c_str()=="y")
+              {
+
+              }
+          }
           break;
-        sensor_msgs::PointCloud2 pcl_output;
-        pcl::toROSMsg (*pcl_node->at(cloud_no), pcl_output);
-        pcl_output.header.frame_id = odom_frame_id_;
-        if (src_trgt==0)
-        {
-            src_trgt=1;
-            pub_target.publish(pcl_output);
-            count_pcl=cloud_no;
-        }
-        else if (src_trgt==1)
-        {
-            src_trgt=0;
-            pub_source.publish(pcl_output);
 
-            std::cout<<"match between node "<<count_pcl<<" and "<<cloud_no<<" ?"<<std::endl;
-            std::string enter_command;
-            std::cin>>enter_command;
-            if (enter_command.c_str()=="y")
-            {
-
-            }
-        }
 
 
     }
@@ -160,6 +161,8 @@ void makeButtonMarker( const tf::Vector3& position, int i)
 
   server->insert(int_marker);
   server->setCallback(int_marker.name, &processFeedback);
+
+  std::cout<<"x: "<<position.x()<<" y: "<<position.y()<<" z: "<<position.z()<<std::endl;
 }
 
 //void store_pose_cb (nav_msgs::Odometry after_map_odom)
@@ -219,6 +222,7 @@ void pcl_and_pose_cb(const sensor_msgs::PointCloud2ConstPtr input, const nav_msg
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromROSMsg (*input, *cloud_in);
     pcl_node->push_back(cloud_in);
+    std::cout<<"cloud size: "<<cloud_in->size()<<std::endl;
 
     tf::Vector3 loam_pose(after_map_odom->pose.pose.position.x,after_map_odom->pose.pose.position.y,after_map_odom->pose.pose.position.z);
 //    loam_pose.x() = after_map_odom.pose.pose.position.x;
