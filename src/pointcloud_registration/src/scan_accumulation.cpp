@@ -1,11 +1,17 @@
 #include <ros/ros.h>
 // PCL specific includes
 
+#include <string>
+
+// for pose relation in gtsam
+#include <std_msgs/Int16MultiArray.h>
+
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_ros/transforms.h>
 #include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -13,6 +19,7 @@
 #include <tf/transform_broadcaster.h>
 
 #include <pcl/registration/icp.h>
+#include <pcl/io/ply_io.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl_ros/filters/passthrough.h>
 #include <pcl/filters/radius_outlier_removal.h>
@@ -31,17 +38,23 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 
-ros::Publisher pub, pub_temp_map, pub_full_map, pub_source, pub_target, pub_icp_odom;
+#include <fstream>
+
+std::ofstream myfile;
+
+ros::Publisher pub, pub_temp_map, pub_full_map, pub_source, pub_target, pub_icp_odom, pub_store_odom, pub_pose_link;
 
 tf::TransformListener* tf_listener_;
 
-std::string odom_frame_id_, base_frame_id_, map_frame_id_;
+std::string odom_frame_id_, base_frame_id_, map_frame_id_, file_name_, directory_name_;
 
 int count, src_trgt, count_pcl, count_pose;
 
 bool odom_start;
 
 tf::Transform transform, offset_transform, now_odom_transform, difference, prev_odom_transform;
+
+nav_msgs::Path stored_odometry;
 
 Eigen::Matrix4f use_odom;
 
@@ -66,6 +79,114 @@ using namespace visualization_msgs;
 boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
 // %EndTag(vars)%
 
+
+tf::Transform EigenToTF(Eigen::Matrix4f eigen_matrix)
+{
+    tf::Transform eigen_TF;
+    double t_x = eigen_matrix(0,3);
+    double t_y = eigen_matrix(1,3);
+    double t_z = eigen_matrix(2,3);
+
+    tf::Matrix3x3 tf3d;
+    tf3d.setValue(static_cast<double>(eigen_matrix(0,0)), static_cast<double>(eigen_matrix(0,1)), static_cast<double>(eigen_matrix(0,2)),
+        static_cast<double>(eigen_matrix(1,0)), static_cast<double>(eigen_matrix(1,1)), static_cast<double>(eigen_matrix(1,2)),
+        static_cast<double>(eigen_matrix(2,0)), static_cast<double>(eigen_matrix(2,1)), static_cast<double>(eigen_matrix(2,2)));
+
+    tf::Quaternion tfqt,rotate;
+    //tf3d.getRotation(tfqt);
+    //tf3d.getRPY (roll,pitch,yaw);
+    //tf3d.setRPY (0.0, pitch, yaw);
+    tf3d.getRotation(tfqt);
+
+    eigen_TF.setOrigin(tf::Vector3(t_x, t_y, t_z));
+    eigen_TF.setRotation(tfqt);
+
+    return eigen_TF;
+}
+
+Eigen::Matrix4f localize(int source_pcl, int target_pcl)
+{
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_comeout(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr target_origin(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr source_origin(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_icp(new pcl::PointCloud<pcl::PointXYZI>);
+
+//    pcl_ros::transformPointCloud(*cloud_minimap, *map_origin, transform);
+    tf::Transform target_tf, source_tf, inv_target_tf, inv_source_tf, icp_tf;
+    target_tf.setOrigin(tf::Vector3(pose_node->at(target_pcl).pose.pose.position.x, pose_node->at(target_pcl).pose.pose.position.y,
+                                    pose_node->at(target_pcl).pose.pose.position.z));
+    target_tf.setRotation(tf::Quaternion(0.0, 0.0, 0.0, 1.0));
+    source_tf.setOrigin(tf::Vector3(pose_node->at(source_pcl).pose.pose.position.x, pose_node->at(source_pcl).pose.pose.position.y,
+                                    pose_node->at(source_pcl).pose.pose.position.z));
+    source_tf.setRotation(tf::Quaternion(0.0, 0.0, 0.0, 1.0));
+
+    inv_source_tf = source_tf.inverse();
+    inv_target_tf = target_tf.inverse();
+
+//    pcl_ros::transformPointCloud (*pcl_node->at(target_pcl), *target_origin, inv_target_tf);
+//    pcl_ros::transformPointCloud (*pcl_node->at(source_pcl), *source_origin, inv_source_tf);
+
+    *target_origin = *pcl_node->at(target_pcl);
+    *source_origin = *pcl_node->at(source_pcl);
+
+    Eigen::Matrix4f compare_matrix;
+
+    icp.setMaximumIterations (5);
+    icp.setMaxCorrespondenceDistance(0.5);
+    //icp.setTransformationEpsilon (1e-7);
+
+    sensor_msgs::PointCloud2 source, target;
+    pcl::toROSMsg(*target_origin, target);
+    target.header.frame_id = odom_frame_id_;
+    pub_target.publish(target);
+
+    icp.setInputSource (source_origin);
+    icp.setInputTarget (target_origin);
+    icp.align (*cloud_comeout);
+    double score=icp.getFitnessScore();
+    compare_matrix = icp.getFinalTransformation ();
+
+
+    pcl::toROSMsg(*cloud_comeout, source);
+    source.header.frame_id = odom_frame_id_;
+    pub_source.publish(source);
+
+    std::cout<<"does this look ok? (y/n)"<<std::endl;
+    std::string feedback;
+    std::cin>>feedback;
+    if (feedback.c_str()=="y")
+    {
+          icp_tf = EigenToTF(compare_matrix);
+          icp_tf = icp_tf * source_tf;
+          //pcl_ros::transformPointCloud (*cloud_comeout, *pcl_node->at(source_pcl), source_tf);
+          tf::Vector3 icp_position;
+          icp_position = icp_tf.getOrigin();
+//          pose_node->at(source_pcl).pose.pose.position.x = icp_position.x();
+//          pose_node->at(source_pcl).pose.pose.position.y = icp_position.y();
+//          pose_node->at(source_pcl).pose.pose.position.z = icp_position.z();
+//          tf::quaternionTFToMsg(icp_tf.getRotation(), pose_node->at(source_pcl).pose.pose.orientation);
+          tf::Matrix3x3 tf3d;
+          tf3d.setRotation(icp_tf.getRotation());
+          double roll, pitch, yaw;
+          tf3d.getRPY(roll, pitch, yaw);
+
+          std_msgs::Int16MultiArray betweenPose;
+          betweenPose.data.resize(5);
+          betweenPose.data.push_back(source_pcl);
+          betweenPose.data.push_back(target_pcl);
+          betweenPose.data.push_back(icp_position.x());
+          betweenPose.data.push_back(icp_position.y());
+          betweenPose.data.push_back(yaw);
+
+          pub_pose_link.publish(betweenPose);
+    }
+    else
+    {
+        std::cout<<"nothing changed..."<<std::endl;
+    }
+
+    return (compare_matrix);
+}
 
 // %Tag(Box)%
 Marker makeBox( InteractiveMarker &msg )
@@ -125,7 +246,7 @@ void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPt
               std::cin>>enter_command;
               if (enter_command.c_str()=="y")
               {
-
+                    localize(count_pcl, cloud_no);
               }
           }
           break;
@@ -175,53 +296,12 @@ void makeButtonMarker( const tf::Vector3& position, int i)
 //    count_pose++;
 //}
 
-Eigen::Matrix4f localize(pcl::PointCloud<pcl::PointXYZI>::Ptr source_pcl, pcl::PointCloud<pcl::PointXYZI>::Ptr target_pcl)
-{
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_comeout(new pcl::PointCloud<pcl::PointXYZI>);
-//    pcl::PointCloud<pcl::PointXYZI>::Ptr map_origin(new pcl::PointCloud<pcl::PointXYZI>);
-
-//    pcl_ros::transformPointCloud(*cloud_minimap, *map_origin, transform);
-
-    Eigen::Matrix4f compare_matrix;
-
-    icp.setMaximumIterations (5);
-    icp.setMaxCorrespondenceDistance(0.5);
-    //icp.setTransformationEpsilon (1e-7);
-
-    sensor_msgs::PointCloud2 source, target;
-    pcl::toROSMsg(*cloud_minimap, target);
-    target.header.frame_id = odom_frame_id_;
-    pub_target.publish(target);
-
-    icp.setInputSource (cloud_minimap);
-    icp.setInputTarget (cloud_accumulated);
-    icp.align (*cloud_comeout);
-    double score=icp.getFitnessScore();
-    compare_matrix = icp.getFinalTransformation ();
-
-
-    pcl::toROSMsg(*cloud_comeout, source);
-    source.header.frame_id = odom_frame_id_;
-    pub_source.publish(source);
-
-    if (score<0.2)
-    {
-        std::cout << "Applied iterations with " <<score<< std::endl;
-    }
-    else
-    {
-        compare_matrix = use_odom;
-    }
-
-
-    return (compare_matrix);
-}
-
 void pcl_and_pose_cb(const sensor_msgs::PointCloud2ConstPtr input, const nav_msgs::OdometryConstPtr after_map_odom)
 {
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_origin (new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromROSMsg (*input, *cloud_in);
-    pcl_node->push_back(cloud_in);
+    //pcl_node->push_back(cloud_in);
     std::cout<<"cloud size: "<<cloud_in->size()<<std::endl;
 
     tf::Vector3 loam_pose(after_map_odom->pose.pose.position.x,after_map_odom->pose.pose.position.y,after_map_odom->pose.pose.position.z);
@@ -229,6 +309,37 @@ void pcl_and_pose_cb(const sensor_msgs::PointCloud2ConstPtr input, const nav_msg
 //    loam_pose.y() = after_map_odom.pose.pose.position.y;
 //    loam_pose.z() = after_map_odom.pose.pose.position.z;
     pose_node->push_back(*after_map_odom);
+
+    tf::Transform loam_tf, inverse_loam_tf;
+    loam_tf.setOrigin(loam_pose);
+    tf::Quaternion loam_tf_orientation;
+    tf::quaternionMsgToTF(after_map_odom->pose.pose.orientation, loam_tf_orientation);
+    loam_tf.setRotation(loam_tf_orientation);
+
+    inverse_loam_tf = loam_tf.inverse();
+    pcl_ros::transformPointCloud (*cloud_in, *cloud_origin, inverse_loam_tf);
+    pcl_node->push_back(cloud_origin);
+
+    // save in pcd
+    std::string save_file_name;
+    std::stringstream nn;
+    nn<<count;
+    save_file_name = directory_name_+ "/" + file_name_ + "_" + nn.str();
+    pcl::io::savePCDFileBinaryCompressed(save_file_name, *cloud_origin);
+
+    std::string save_odom;
+    save_odom = directory_name_+"/odom.txt";
+
+    myfile<<after_map_odom->pose.pose.position.x<<" "<<after_map_odom->pose.pose.position.y<<" "<<after_map_odom->pose.pose.position.z<<
+            " "<<after_map_odom->pose.pose.orientation.x<<" "<<after_map_odom->pose.pose.orientation.y<<" "<<
+            after_map_odom->pose.pose.orientation.z<<" "<<after_map_odom->pose.pose.orientation.w<<"\n";
+
+    geometry_msgs::PoseStamped pcl_odom;
+
+    pcl_odom.pose = after_map_odom->pose.pose;
+
+    stored_odometry.poses.push_back(pcl_odom);
+
     count++;
 
     makeButtonMarker(loam_pose, count);
@@ -384,6 +495,30 @@ void pc_cb(const sensor_msgs::PointCloud2ConstPtr input)
 //    prev_odom_transform = now_odom_transform;
 }
 
+void pose_refine_cb (nav_msgs::Path refined_odom)
+{
+    server.reset( new interactive_markers::InteractiveMarkerServer("show_map","",false) );
+
+    server->applyChanges();
+
+    count = 0;
+
+    pose_node->clear();
+
+    for (int j=0; j<refined_odom.poses.size(); j++)
+    {
+        nav_msgs::Odometry temp_odom;
+        tf::Vector3 new_loam_pose (refined_odom.poses[j].pose.position.x, refined_odom.poses[j].pose.position.y, 0.0);
+        temp_odom.pose.pose = refined_odom.poses[j].pose;
+        pose_node->push_back(temp_odom);
+
+        makeButtonMarker(new_loam_pose, j+1);
+        //server->applyChanges();
+    }
+
+
+}
+
 int
 main (int argc, char** argv)
 {
@@ -394,14 +529,20 @@ main (int argc, char** argv)
 
     tf_listener_ = new tf::TransformListener();
 
+    bool load_pcd;
+
     priv_nh.getParam("odom_frame", odom_frame_id_);
     priv_nh.getParam("base_frame", base_frame_id_);
     priv_nh.getParam("map_frame", map_frame_id_);
+    priv_nh.getParam("file_name", file_name_);
+    priv_nh.getParam("directory_name", directory_name_);
+    priv_nh.getParam("offline_mapping", load_pcd);
 
 //    ros::Subscriber sub_pcl = nh.subscribe <sensor_msgs::PointCloud2> ("laser_cloud_surround", 1, pc_cb);
 //    ros::Subscriber sub_pose = nh.subscribe <nav_msgs::Odometry> ("aft_mapped_to_init", 1, store_pose_cb);
 
-    message_filters::Subscriber<sensor_msgs::PointCloud2> pcl_sub(nh, "laser_cloud_surround", 1);
+    ros::Subscriber sub_refine_pose = nh.subscribe <nav_msgs::Path> ("final_pose", 1, pose_refine_cb);
+    message_filters::Subscriber<sensor_msgs::PointCloud2> pcl_sub(nh, "velodyne_cloud_registered", 1);
     message_filters::Subscriber<nav_msgs::Odometry> pose_sub(nh, "aft_mapped_to_init", 1);
     message_filters::TimeSynchronizer<sensor_msgs::PointCloud2, nav_msgs::Odometry> sync(pcl_sub, pose_sub, 10);
     sync.registerCallback(boost::bind(&pcl_and_pose_cb, _1, _2));
@@ -411,7 +552,8 @@ main (int argc, char** argv)
     pub_temp_map = nh.advertise<sensor_msgs::PointCloud2> ("/temp_map", 1);
     pub_target = nh.advertise<sensor_msgs::PointCloud2> ("/target_map", 1);
     pub_source = nh.advertise<sensor_msgs::PointCloud2> ("/source_map", 1);
-    pub_icp_odom = nh.advertise<nav_msgs::Odometry> ("/icp_odom", 1);
+    pub_store_odom = nh.advertise<nav_msgs::Path> ("store_odom", 1);
+    pub_pose_link = nh.advertise <std_msgs::Int16MultiArray> ("new_link", 1);
 
     count = 0;
     count_pcl = 0;
@@ -433,11 +575,86 @@ main (int argc, char** argv)
 
     pose_node = new std::vector<nav_msgs::Odometry>;
 
-    //ros::Timer frame_timer = nh.createTimer(ros::Duration(0.01), frameCallback);
-
     server.reset( new interactive_markers::InteractiveMarkerServer("show_map","",false) );
 
     server->applyChanges();
+
+    std::string odom_txt_name;
+    odom_txt_name = directory_name_+"/odom.txt";
+
+    if (load_pcd)
+    {
+        while (1)
+        {
+            pcl::PointCloud<pcl::PointXYZI>::Ptr one_small_cloud (new pcl::PointCloud<pcl::PointXYZI>);
+            std::string portion_map;
+            std::stringstream zz;
+            zz<< count;
+            portion_map = directory_name_ +"/" +file_name_ + "_" + zz.str();
+
+            //pcl::io::loadPCDFile(portion_map, *one_small_cloud);
+            if (pcl::io::loadPCDFile (portion_map, *one_small_cloud) == -1) //* load the file
+            {
+                std::cout<<"pcd files end at "<<count<<std::endl;
+                return (-1);
+            }
+            pcl_node->push_back(one_small_cloud);
+            count++;
+
+        }
+        std::ifstream load_odom;
+        load_odom.open(odom_txt_name.c_str(), std::ios::app);
+        double value;
+        int text_position;
+        nav_msgs::Odometry record_odom;
+        while (load_odom >> value)
+        {
+            text_position++;
+            if (text_position==1)
+            {
+                record_odom.pose.pose.position.x = value;
+            }
+            else if (text_position==2)
+            {
+                record_odom.pose.pose.position.y = value;
+            }
+            else if (text_position==3)
+            {
+                record_odom.pose.pose.position.z = value;
+            }
+            else if (text_position==4)
+            {
+                record_odom.pose.pose.orientation.x = value;
+            }
+            else if (text_position==5)
+            {
+                record_odom.pose.pose.orientation.y = value;
+            }
+            else if (text_position==6)
+            {
+                record_odom.pose.pose.orientation.z = value;
+            }
+            else if (text_position==7)
+            {
+                record_odom.pose.pose.orientation.w = value;
+                pose_node->push_back(record_odom);
+                tf::Vector3 record_pose(record_odom.pose.pose.position.x, record_odom.pose.pose.position.y, 0.0);
+                makeButtonMarker(record_pose, pose_node->size());
+                text_position=0;
+            }
+
+        }
+    }
+    else
+    {
+        myfile.open (odom_txt_name.c_str());
+    }
+
+
+
+    //ros::Timer frame_timer = nh.createTimer(ros::Duration(0.01), frameCallback);
+
+
 
     ros::spin();
 
