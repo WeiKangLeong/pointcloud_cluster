@@ -177,7 +177,7 @@ ICP_scan_matchNode::ICP_scan_matchNode()
   pub_input_odom_ = nh_.advertise <nav_msgs::Odometry> ("input_odom", 1);
   pub_aligned_ = nh_.advertise <sensor_msgs::PointCloud2> ("/velo_cloud", 1);
   pub_minimap_ = nh_.advertise <sensor_msgs::PointCloud2> ("/minimap", 1);
-  pub_initialized_ = nh_.advertise <geometry_msgs::PoseWithCovarianceStamped> ("initialpose", 1);
+  pub_initialized_ = nh_.advertise <geometry_msgs::PoseWithCovarianceStamped> ("/iMiev/initialpose", 1);
 
   ros::NodeHandle priv_nh("~");
 
