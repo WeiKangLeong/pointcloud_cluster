@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<launch>
+	<node pkg="pointcloud_filter" type="pointcloud_filter_passthrough" name="filter_inside">
+		<remap from="input" to="rslidar_points" />
+		<remap from="output" to="filter_points" />
+		<param name="filter_inside" value="true" />
+		<param name="filter_outside" value="false" />
+		<param name="filter_size" value="1.0" />
+	</node>
+
+  
+
+</launch>
