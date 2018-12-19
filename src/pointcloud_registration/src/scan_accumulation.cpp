@@ -79,6 +79,17 @@ using namespace visualization_msgs;
 boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
 // %EndTag(vars)%
 
+tf::Transform OdomToTF(nav_msgs::Odometry odom)
+{
+    tf::Transform odom_tf;
+    tf::Vector3 odom_pose(odom.pose.pose.position.x, odom.pose.pose.position.y, odom.pose.pose.position.z);
+    tf::Quaternion odom_orient;
+    tf::quaternionMsgToTF(odom.pose.pose.orientation, odom_orient);
+    odom_tf.setOrigin(odom_pose);
+    odom_tf.setRotation(odom_orient);
+
+    return odom_tf;
+}
 
 tf::Transform EigenToTF(Eigen::Matrix4f eigen_matrix)
 {
@@ -137,7 +148,7 @@ Eigen::Matrix4f localize(int source_pcl, int target_pcl)
 
     sensor_msgs::PointCloud2 source, target;
     pcl::toROSMsg(*target_origin, target);
-    target.header.frame_id = odom_frame_id_;
+    target.header.frame_id = map_frame_id_;
     pub_target.publish(target);
 
     icp.setInputSource (source_origin);
@@ -148,7 +159,7 @@ Eigen::Matrix4f localize(int source_pcl, int target_pcl)
 
 
     pcl::toROSMsg(*cloud_comeout, source);
-    source.header.frame_id = odom_frame_id_;
+    source.header.frame_id = map_frame_id_;
     pub_source.publish(source);
 
     std::cout<<"does this look ok? (y/n)"<<std::endl;
@@ -191,18 +202,18 @@ Eigen::Matrix4f localize(int source_pcl, int target_pcl)
 // %Tag(Box)%
 Marker makeBox( InteractiveMarker &msg )
 {
-  Marker marker;
+    Marker marker;
 
-  marker.type = Marker::SPHERE;
-  marker.scale.x = msg.scale * 0.45;
-  marker.scale.y = msg.scale * 0.45;
-  marker.scale.z = msg.scale * 0.45;
-  marker.color.r = 0.5;
-  marker.color.g = 0.5;
-  marker.color.b = 0.5;
-  marker.color.a = 1.0;
+    marker.type = Marker::SPHERE;
+    marker.scale.x = msg.scale * 0.45;
+    marker.scale.y = msg.scale * 0.45;
+    marker.scale.z = msg.scale * 0.45;
+    marker.color.r = 0.5;
+    marker.color.g = 0.5;
+    marker.color.b = 0.5;
+    marker.color.a = 1.0;
 
-  return marker;
+    return marker;
 }
 
 
@@ -229,7 +240,9 @@ void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPt
           ROS_INFO_STREAM( s.str() << ": button click" << mouse_point_ss.str() << "." );
           sensor_msgs::PointCloud2 pcl_output;
           pcl::toROSMsg (*pcl_node->at(cloud_no), pcl_output);
-          pcl_output.header.frame_id = odom_frame_id_;
+          tf::Transform move_cloud_tf;
+          move_cloud_tf = OdomToTF(pose_node->at(cloud_no));
+          pcl_output.header.frame_id = map_frame_id_;
           if (src_trgt==0)
           {
               src_trgt=1;
@@ -261,14 +274,16 @@ void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPt
 void makeButtonMarker( const tf::Vector3& position, int i)
 {
   InteractiveMarker int_marker;
-  int_marker.header.frame_id = odom_frame_id_;
+  int_marker.header.frame_id = map_frame_id_;
   tf::pointTFToMsg(position, int_marker.pose.position);
-  int_marker.scale = 1;
+  int_marker.scale = 2;
 
   std::stringstream ss;
   ss<< i;
   int_marker.name = ss.str();
   int_marker.description = "Button "+ss.str();
+
+  //std::cout<<int_marker.description<<" is creating"<<std::endl;
 
   InteractiveMarkerControl control;
 
@@ -513,7 +528,7 @@ void pose_refine_cb (nav_msgs::Path refined_odom)
         pose_node->push_back(temp_odom);
 
         makeButtonMarker(new_loam_pose, j+1);
-        //server->applyChanges();
+        server->applyChanges();
     }
 
 
@@ -579,71 +594,117 @@ main (int argc, char** argv)
 
     server->applyChanges();
 
+    //server.reset();
+
     std::string odom_txt_name;
     odom_txt_name = directory_name_+"/odom.txt";
 
+    tf::Transform rotate_map;
+    tf::Quaternion rotate_orientation;
+    rotate_map.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
+    rotate_orientation.setRPY(1.5708, 0.0, 0.0);
+    rotate_map.setRotation(rotate_orientation);
+
     if (load_pcd)
     {
-        while (1)
-        {
-            pcl::PointCloud<pcl::PointXYZI>::Ptr one_small_cloud (new pcl::PointCloud<pcl::PointXYZI>);
-            std::string portion_map;
-            std::stringstream zz;
-            zz<< count;
-            portion_map = directory_name_ +"/" +file_name_ + "_" + zz.str();
-
-            //pcl::io::loadPCDFile(portion_map, *one_small_cloud);
-            if (pcl::io::loadPCDFile (portion_map, *one_small_cloud) == -1) //* load the file
-            {
-                std::cout<<"pcd files end at "<<count<<std::endl;
-                return (-1);
-            }
-            pcl_node->push_back(one_small_cloud);
-            count++;
-
-        }
         std::ifstream load_odom;
         load_odom.open(odom_txt_name.c_str(), std::ios::app);
         double value;
-        int text_position;
+        int text_position=0;
         nav_msgs::Odometry record_odom;
+        tf::Transform odom_tf;
+        tf::Vector3 odom_position;
+        double ori_x, ori_y, ori_z, ori_w;
+        tf::Quaternion odom_orientation;
+        std::cout<<"searching for odom text: "<<load_pcd<<std::endl;
         while (load_odom >> value)
         {
             text_position++;
             if (text_position==1)
             {
-                record_odom.pose.pose.position.x = value;
+                odom_position.setX(value);
+                std::cout<<value<<" ";
             }
             else if (text_position==2)
             {
-                record_odom.pose.pose.position.y = value;
+                odom_position.setY(value);
+                std::cout<<value<<" ";
             }
             else if (text_position==3)
             {
-                record_odom.pose.pose.position.z = value;
+                odom_position.setZ(value);
+                std::cout<<value<<std::endl;
             }
             else if (text_position==4)
             {
-                record_odom.pose.pose.orientation.x = value;
+                ori_x = value;
+                //std::cout<<value<<" ";
             }
             else if (text_position==5)
             {
-                record_odom.pose.pose.orientation.y = value;
+                ori_y = value;
+                //std::cout<<value<<" ";
             }
             else if (text_position==6)
             {
-                record_odom.pose.pose.orientation.z = value;
+                ori_z = value;
+                //std::cout<<value<<" ";
             }
             else if (text_position==7)
             {
-                record_odom.pose.pose.orientation.w = value;
+                //std::cout<<value<<std::endl;
+                ori_w = value;
+                odom_tf.setOrigin(odom_position);
+                odom_tf.setRotation(tf::Quaternion(ori_x, ori_y, ori_z, ori_w));
+
+                tf::Transform after_rotate;
+                after_rotate = rotate_map * odom_tf;
+
+                tf::Vector3 record_pose = after_rotate.getOrigin();
+
+                std::cout<<"rotation: "<<rotate_map.getRotation().getAngle()<< " "<<after_rotate.getRotation().getAngle()<<std::endl;
+
+//                tf::Quaternion odom_quaternion;
+//                tf::quaternionMsgToTF(record_odom.pose.pose.orientation, odom_quaternion);
+
+                record_odom.pose.pose.position.x = record_pose.x();
+                record_odom.pose.pose.position.y = record_pose.y();
+                record_odom.pose.pose.position.z = record_pose.z();
+                tf::quaternionTFToMsg (after_rotate.getRotation(), record_odom.pose.pose.orientation);
                 pose_node->push_back(record_odom);
-                tf::Vector3 record_pose(record_odom.pose.pose.position.x, record_odom.pose.pose.position.y, 0.0);
+
+                //std::cout<<"pose node size: "<<pose_node->size()<<std::endl;
                 makeButtonMarker(record_pose, pose_node->size());
+                server->applyChanges();
                 text_position=0;
+
             }
 
         }
+//        bool map_loaded_finished=false;
+//        while (!map_loaded_finished)
+//        {
+//            pcl::PointCloud<pcl::PointXYZI>::Ptr one_small_cloud (new pcl::PointCloud<pcl::PointXYZI>);
+//            std::string portion_map;
+//            std::stringstream zz;
+//            zz<< count;
+//            portion_map = directory_name_ +"/" +file_name_ + "_" + zz.str();
+
+//            //pcl::io::loadPCDFile(portion_map, *one_small_cloud);
+//            if (pcl::io::loadPCDFile (portion_map, *one_small_cloud) == -1) //* load the file
+//            {
+//                std::cout<<"pcd files end at "<<count<<std::endl;
+////                return (0);
+//                map_loaded_finished=true;
+//            }
+//            if (!map_loaded_finished)
+//            {
+//                pcl_node->push_back(one_small_cloud);
+//                count++;
+//            }
+
+//        }
+
     }
     else
     {
@@ -658,6 +719,6 @@ main (int argc, char** argv)
 
     ros::spin();
 
-    server.reset();
+
 }
 

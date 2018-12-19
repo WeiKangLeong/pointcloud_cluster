@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pointcloud_filter)
+project(pointcloud_simulation)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,23 +8,17 @@ project(pointcloud_filter)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
   nav_msgs
   pcl_conversions
   pcl_ros
   roscpp
-  rospy
   sensor_msgs
   std_msgs
   tf
   tf_conversions
   visualization_msgs
-  cv_bridge
-  image_transport
-  message_filters
 )
 
-find_package(OpenCV REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -44,10 +38,10 @@ find_package(OpenCV REQUIRED)
 ##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
 ## * In the file package.xml:
 ##   * add a build_depend tag for "message_generation"
-##   * add a build_depend and a run_depend tag for each package in MSG_DEP_SET
+##   * add a build_depend and a exec_depend tag for each package in MSG_DEP_SET
 ##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
 ##     but can be declared for certainty nonetheless:
-##     * add a run_depend tag for "message_runtime"
+##     * add a exec_depend tag for "message_runtime"
 ## * In this file (CMakeLists.txt):
 ##   * add "message_generation" and every package in MSG_DEP_SET to
 ##     find_package(catkin REQUIRED COMPONENTS ...)
@@ -82,7 +76,7 @@ find_package(OpenCV REQUIRED)
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   geometry_msgs#   nav_msgs#   sensor_msgs#   std_msgs#   visualization_msgs
+#   nav_msgs#   sensor_msgs#   std_msgs#   visualization_msgs
 # )
 
 ################################################
@@ -92,7 +86,7 @@ find_package(OpenCV REQUIRED)
 ## To declare and build dynamic reconfigure parameters within this
 ## package, follow these steps:
 ## * In the file package.xml:
-##   * add a build_depend and a run_depend tag for "dynamic_reconfigure"
+##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
 ## * In this file (CMakeLists.txt):
 ##   * add "dynamic_reconfigure" to
 ##     find_package(catkin REQUIRED COMPONENTS ...)
@@ -116,9 +110,8 @@ find_package(OpenCV REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES pointcloud_filter_mask
-  CATKIN_DEPENDS geometry_msgs nav_msgs pcl_conversions pcl_ros roscpp rospy sensor_msgs std_msgs tf tf_conversions visualization_msgs cv_bridge image_transport message_filters
-  DEPENDS OpenCV
+#  LIBRARIES pointcloud_simulation
+#  CATKIN_DEPENDS nav_msgs pcl_conversions pcl_ros roscpp sensor_msgs std_msgs tf tf_conversions visualization_msgs
 #  DEPENDS system_lib
 )
 
@@ -129,13 +122,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
- ../../include
-  ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS}
+# include
+  ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/pointcloud_filter_mask.cpp
+#   src/${PROJECT_NAME}/pointcloud_simulation.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -146,16 +139,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(pointcloud_filter_mask src/pointcloud_filter_mask.cpp)
-add_executable(pointcloud_filter_box src/pointcloud_filter_box.cpp)
-add_executable(pointcloud_filter_road src/pointcloud_filter_road.cpp)
-add_executable(pointcloud_filter_color_box src/pointcloud_filter_color_box.cpp)
-add_executable(pointcloud_filter_passthrough src/pointcloud_filter_passthrough.cpp)
-add_executable(pointcloud_filter_readwrite src/pointcloud_filter_readwrite.cpp)
-add_executable(pointcloud_filter_map_ground src/pointcloud_filter_map_ground.cpp)
-add_executable(pointcloud_compress_map src/pointcloud_compress_map.cpp)
-add_executable(pointcloud_filter_vertical_feature src/pointcloud_filter_vertical_feature.cpp)
-add_executable(pointcloud_grid_clustering src/pointcloud_grid_clustering.cpp)
+# add_executable(${PROJECT_NAME}_node src/pointcloud_simulation_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -168,14 +152,54 @@ add_executable(pointcloud_grid_clustering src/pointcloud_grid_clustering.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(pointcloud_filter_mask ${catkin_LIBRARIES})
-target_link_libraries(pointcloud_filter_box ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-target_link_libraries(pointcloud_filter_road ${catkin_LIBRARIES})
-target_link_libraries(pointcloud_filter_color_box ${catkin_LIBRARIES})
-target_link_libraries(pointcloud_filter_passthrough ${catkin_LIBRARIES})
-target_link_libraries(pointcloud_filter_readwrite ${catkin_LIBRARIES})
-target_link_libraries(pointcloud_filter_map_ground ${catkin_LIBRARIES})
-target_link_libraries(pointcloud_compress_map ${catkin_LIBRARIES})
-target_link_libraries(pointcloud_filter_vertical_feature ${catkin_LIBRARIES})
-target_link_libraries(pointcloud_grid_clustering ${catkin_LIBRARIES})
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
+#############
+## Install ##
+#############
+
+# all install targets should use catkin DESTINATION variables
+# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+
+## Mark executable scripts (Python etc.) for installation
+## in contrast to setup.py, you can choose the destination
+# install(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark executables and/or libraries for installation
+# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark cpp header files for installation
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+# )
+
+## Mark other files for installation (e.g. launch and bag files, etc.)
+# install(FILES
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_pointcloud_simulation.cpp)
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+# endif()
+
+## Add folders to be run by python nosetests
+# catkin_add_nosetests(test)

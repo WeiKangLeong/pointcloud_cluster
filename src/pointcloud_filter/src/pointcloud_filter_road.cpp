@@ -26,7 +26,7 @@
 
 #include <visualization_msgs/Marker.h>
 
-#include "../../../include/grid.h"
+#include "grid.h"
 //#include <algorithm.h>
 
 #define RES 0.1
@@ -105,7 +105,7 @@ void find_a_plane()
    c = bb;
     d = -(a*centroid.x + b*centroid.y + c*centroid.z);
     norm = sqrt(a*a + b*b + c*c);
-    //std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<norm<<std::endl;
+    std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<norm<<std::endl;
     int outlier=0;
     double distance = 0.0;
     for (int ddd=0; ddd<cloud_lowest_mapped->size(); ddd++)
