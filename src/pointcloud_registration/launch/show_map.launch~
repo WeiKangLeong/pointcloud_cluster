@@ -1,7 +1,0 @@
-<launch>
-    <arg name="map_location" default="$(find pointcloud_registration)/map/loam_cleantech_filtered.pcd" />
-    <node pkg="pointcloud_registration" type="show_map" name="show_map" >
-		<param name="map_location" value="$(arg map_location)" />
-		<param name="global_frame_id" value="wheelchair/map" />
-	</node>
-</launch>
