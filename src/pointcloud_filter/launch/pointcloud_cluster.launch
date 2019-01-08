@@ -5,9 +5,11 @@
     <remap from="cloud_input" to="rslidar_points" />
   </node>
 
-  <node pkg="pointcloud_filter" type="pointcloud_filter_box" name="box_filter" output="screen">
-    <remap from="cluster" to="/object_on_road" />
-    <remap from="box" to="/box" />
+  <node pkg="pointcloud_filter" type="pointcloud_grid_clustering" name="grid_filter" output="screen">
+    <remap from="cloud_input" to="/object_on_road" />
+    <param name="detect_x" value="30.0" />
+	<param name="detect_y" value="30.0" />
+	<param name="resolution" value="0.5" />
     
   </node>
   

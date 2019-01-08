@@ -3,7 +3,7 @@
 <!-- Launch rviz -->
 <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find pointcloud_registration)/cetran_velodyne.rviz" />
 
-<!-- LAUNCH RSLIDAR DRIVER HERE -->
+<!-- LAUNCH RSLIDAR DRIVER HERE 
 	<node  name="rslidar_node" pkg="rslidar_driver" type="rslidar_node" output="screen" >
 		<param name="model" value="RS32"/>
 		<param name="device_ip" value="192.168.200.204"/>
@@ -18,7 +18,7 @@
 		<param name="curves_rate_path" value="$(find rslidar_pointcloud)/ConfigrationFiles/CurveRate.csv" />
 
 	</node>
-
+-->
 <!--	IF USING 3D LOCALIZATION WITH 3D LIDAR
 
 	<node pkg="pointcloud_registration" type="icp_localize" name="icp_localize" output="screen">
