@@ -34,6 +34,7 @@
 #include <pcl/io/ply_io.h>
 #include <pcl_ros/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/console/time.h>   // TicToc
 #include <pcl/common/common.h>
 
@@ -59,8 +60,11 @@ private:
 
     pcl::PassThrough<pcl::PointXYZI> pass;
     pcl::VoxelGrid<pcl::PointXYZI> voxel;
+    pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
 
     double detect_x_, detect_y_, resolution_;
+    int total_grid_;
+    double density_;
 
     std::vector<std::vector<int>* >* grid_table_;
     std::vector<int>* chess_plate_;
@@ -70,9 +74,7 @@ private:
 
     nav_msgs::OccupancyGrid map_;
 
-    DBSCAN* dbscan;
-
-    int total_grid_;
+    DBSCAN* dbscan;    
 
     // function to support
     void clear_grid();
@@ -101,11 +103,13 @@ grid_clustering::grid_clustering()
     detect_x_ = 30.0;
     detect_y_ = 30.0;
     resolution_ = 0.1;
+    density_ = 0.1;
 
     ros::NodeHandle priv_nh_("~");
     priv_nh_.getParam("detect_x", detect_x_);
     priv_nh_.getParam("detect_y", detect_y_);
     priv_nh_.getParam("resolution", resolution_);
+    priv_nh_.getParam("density", density_);
 
     cluster_table_ = new std::vector<std::vector<int>* >;
     grid_table_ = new std::vector<std::vector<int>* >;
@@ -163,7 +167,7 @@ void grid_clustering::pointcloud_cb_(const sensor_msgs::PointCloud2ConstPtr &inp
     pass.setFilterLimits (-detect_y_, detect_y_);
     pass.filter (*first_input);
 
-    voxel.setLeafSize (0.1, 0.1, 0.1);
+    voxel.setLeafSize (density_, density_, density_);
     voxel.setInputCloud (first_input);
     voxel.filter (*compressed_input);
 

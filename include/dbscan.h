@@ -617,7 +617,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr>* dbscan_cluster_flat_intensity
             //std::cout<<"cloud 1 size: "<<cloud_1->size()<<std::endl;
             int m=0;
             // double d_dist = 2.0*tan(3.14159*2/180)*sqrt(cloud_1->points[i].x * cloud_1->points[i].x + cloud_1->points[i].y * cloud_1->points[i].y);
-            double d_dist = 1.2;
+            double d_dist = 1.0;
 
             for (int j=0; j<cloudin_cluster->size(); j++)
             {

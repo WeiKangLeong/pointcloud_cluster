@@ -10,6 +10,7 @@
     <param name="detect_x" value="30.0" />
 	<param name="detect_y" value="30.0" />
 	<param name="resolution" value="0.5" />
+	<param name="density" value="0.5" />
     
   </node>
   
