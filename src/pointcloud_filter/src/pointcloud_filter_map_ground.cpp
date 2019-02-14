@@ -431,6 +431,20 @@ main (int argc, char** argv)
 
     std::cout<<"map loaded with size: "<<cloud_largemap->size()<<" x: "<<range_x<<" y: "<<range_y<<std::endl;
 
+    nav_msgs::OccupancyGrid msg;
+    msg.info.width = range_x/resolution_;
+    msg.info.height = range_y/resolution_;
+    msg.info.resolution = resolution_;
+    msg.header.stamp = ros::Time::now();
+    msg.header.frame_id = map_frame_;
+
+    int total_grid_ = int(msg.info.width)*int(msg.info.height);
+
+    for (int m=0; m<total_grid_; m++)
+    {
+        msg.data.push_back(-1);
+    }
+
     for (int i=0; i<cloud_largemap->size(); i++)
     {
         grid_map_->InsertXYZI_with_origin(cloud_largemap->points[i], i);
@@ -458,6 +472,24 @@ main (int argc, char** argv)
             pt_on_map=cloud_gridmap->points[lb];
             cloud_grid->push_back(pt_on_map);
         }
+        else if (cloud_gridmap->points[lb].z==-1)
+        {
+            double grid_x = cloud_gridmap->points[lb].x;// + range_x/2;
+            double grid_y = cloud_gridmap->points[lb].y;// + range_y/2;
+
+            int place = int(grid_x/resolution_)*msg.info.height+int(grid_y/resolution_);
+            int map_place = int(grid_y/resolution_)*msg.info.width+int(grid_x/resolution_);
+
+            if (map_place>msg.data.size())
+            {
+                std::cout<<"pixel number: "<<map_place<<" map size: "<<msg.data.size()<<std::endl;
+            }
+
+            else
+            {
+                msg.data[map_place] = 0;
+            }
+        }
     }
 
     sensor_msgs::PointCloud2 outputn, outputm;
@@ -471,21 +503,37 @@ main (int argc, char** argv)
     outputm.header.frame_id = map_frame_;
     pub_object.publish (outputm);
 
-        nav_msgs::OccupancyGrid msg;
-        msg.info.width = range_y/resolution_;
-        msg.info.height = range_x/resolution_;
-        msg.info.resolution = resolution_;
-        msg.header.stamp = ros::Time::now();
-        msg.header.frame_id = map_frame_;
 
-        filter_road_ = grid_map_->getMap();
 
-        //std::cout<<"map size: "<<filter_road_->size()<<std::endl;
+        //filter_road_ = grid_map_->getMap();
 
-        for (int i=0; i<filter_road_->size(); i++)
+        std::cout<<"map size: "<<cloud_grid->size()<<std::endl;
+
+        for (int i=0; i<cloud_grid->size(); i++)
         {
-            msg.data.push_back(filter_road_->at(i));
+            double grid_x = cloud_grid->points[i].x;// + range_x/2;
+            double grid_y = cloud_grid->points[i].y;// + range_y/2;
+
+
+
+            int place = int(grid_x/resolution_)*msg.info.height+int(grid_y/resolution_);
+            int map_place = int(grid_y/resolution_)*msg.info.width+int(grid_x/resolution_);
+
+            if (map_place>msg.data.size())
+            {
+                std::cout<<"pixel number: "<<map_place<<" map size: "<<msg.data.size()<<std::endl;
+            }
+
+            else
+            {
+                msg.data[map_place] = 100;
+            }
         }
+
+//        for (int i=0; i<filter_road_->size(); i++)
+//        {
+//            msg.data.push_back(filter_road_->at(i));
+//        }
 
         pub_grid_map.publish(msg);
 

@@ -1,0 +1,6 @@
+<launch>
+	<node pkg="pointcloud_filter" type="pointcloud_position_clustering" name="point_position" output="screen">
+		<remap from="cloud_input" to="rslidar_points" />
+		<param name="sequence_text_file" value="$(find pointcloud_filter)/config/rs_sequence.txt" />
+	</node>
+</launch>

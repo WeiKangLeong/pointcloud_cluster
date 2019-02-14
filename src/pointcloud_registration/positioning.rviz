@@ -7,7 +7,8 @@ Panels:
         - /Global Options1
         - /Status1
         - /Grid1/Offset1
-        - /Map1/Status1
+        - /PointCloud21/Status1
+        - /rslidar_points1
       Splitter Ratio: 0.5
     Tree Height: 775
   - Class: rviz/Selection
@@ -33,7 +34,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.4
-      Cell Size: 10
+      Cell Size: 1
       Class: rviz/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -47,7 +48,7 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 10
+      Plane Cell Count: 60
       Reference Frame: <Fixed Frame>
       Value: true
     - Alpha: 1
@@ -60,22 +61,22 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: FlatColor
+      Color Transformer: Intensity
       Decay Time: 0
       Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 4096
+      Max Intensity: -999999
       Min Color: 0; 0; 0
-      Min Intensity: 0
+      Min Intensity: 999999
       Name: PointCloud2
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 3
+      Size (Pixels): 5
       Size (m): 0.01
       Style: Points
-      Topic: /road_map
+      Topic: /find_relation
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -152,9 +153,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 125.834
+      Max Intensity: 170
       Min Color: 0; 0; 0
-      Min Intensity: 0.815994
+      Min Intensity: 0
       Name: layer1
       Position Transformer: XYZ
       Queue Size: 10
@@ -182,9 +183,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 80
       Min Color: 0; 0; 0
-      Min Intensity: 1.52054
+      Min Intensity: 0
       Name: layer2
       Position Transformer: XYZ
       Queue Size: 10
@@ -212,9 +213,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 150.613
+      Max Intensity: 210
       Min Color: 0; 0; 0
-      Min Intensity: 0.584286
+      Min Intensity: 0
       Name: layer3
       Position Transformer: XYZ
       Queue Size: 10
@@ -242,9 +243,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 190
       Min Color: 0; 0; 0
-      Min Intensity: 0.986021
+      Min Intensity: 0
       Name: layer4
       Position Transformer: XYZ
       Queue Size: 10
@@ -272,9 +273,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 390
       Min Color: 0; 0; 0
-      Min Intensity: 1.53026
+      Min Intensity: 0
       Name: layer5
       Position Transformer: XYZ
       Queue Size: 10
@@ -302,9 +303,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 390
       Min Color: 0; 0; 0
-      Min Intensity: 0.897466
+      Min Intensity: 0
       Name: layer6
       Position Transformer: XYZ
       Queue Size: 10
@@ -332,9 +333,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 440
       Min Color: 0; 0; 0
-      Min Intensity: 2.65462
+      Min Intensity: 0
       Name: layer7
       Position Transformer: XYZ
       Queue Size: 10
@@ -362,9 +363,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 430
       Min Color: 0; 0; 0
-      Min Intensity: 1.1886
+      Min Intensity: 0
       Name: layer8
       Position Transformer: XYZ
       Queue Size: 10
@@ -392,9 +393,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 138.076
+      Max Intensity: 370
       Min Color: 0; 0; 0
-      Min Intensity: 1.49155
+      Min Intensity: 0
       Name: layer9
       Position Transformer: XYZ
       Queue Size: 10
@@ -422,9 +423,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 390
       Min Color: 0; 0; 0
-      Min Intensity: 1.33507
+      Min Intensity: 0
       Name: layer10
       Position Transformer: XYZ
       Queue Size: 10
@@ -440,8 +441,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 14.649
-        Min Value: 2.23816
+        Max Value: -0.246351
+        Min Value: -1.6354
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -482,9 +483,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 330
       Min Color: 0; 0; 0
-      Min Intensity: 1.7028
+      Min Intensity: 0
       Name: layer12
       Position Transformer: XYZ
       Queue Size: 10
@@ -512,9 +513,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 137.966
+      Max Intensity: 360
       Min Color: 0; 0; 0
-      Min Intensity: 1.10279
+      Min Intensity: 0
       Name: layer13
       Position Transformer: XYZ
       Queue Size: 10
@@ -542,9 +543,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 320
       Min Color: 0; 0; 0
-      Min Intensity: 1.40463
+      Min Intensity: 0
       Name: layer14
       Position Transformer: XYZ
       Queue Size: 10
@@ -572,9 +573,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 109.696
+      Max Intensity: 320
       Min Color: 0; 0; 0
-      Min Intensity: 2.21739
+      Min Intensity: 0
       Name: layer15
       Position Transformer: XYZ
       Queue Size: 10
@@ -602,9 +603,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 330
       Min Color: 0; 0; 0
-      Min Intensity: 1.33228
+      Min Intensity: 0
       Name: layer16
       Position Transformer: XYZ
       Queue Size: 10
@@ -632,9 +633,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 63.6119
+      Max Intensity: 300
       Min Color: 0; 0; 0
-      Min Intensity: 0.765892
+      Min Intensity: 0
       Name: layer17
       Position Transformer: XYZ
       Queue Size: 10
@@ -662,9 +663,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 310
       Min Color: 0; 0; 0
-      Min Intensity: 0.686031
+      Min Intensity: 0
       Name: layer18
       Position Transformer: XYZ
       Queue Size: 10
@@ -692,9 +693,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 189.505
+      Max Intensity: 320
       Min Color: 0; 0; 0
-      Min Intensity: 0.979574
+      Min Intensity: 0
       Name: layer19
       Position Transformer: XYZ
       Queue Size: 10
@@ -722,9 +723,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 280
       Min Color: 0; 0; 0
-      Min Intensity: 0.880844
+      Min Intensity: 0
       Name: layer20
       Position Transformer: XYZ
       Queue Size: 10
@@ -752,9 +753,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 115.728
+      Max Intensity: 280
       Min Color: 0; 0; 0
-      Min Intensity: 0.569194
+      Min Intensity: 0
       Name: layer21
       Position Transformer: XYZ
       Queue Size: 10
@@ -782,9 +783,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 250
       Min Color: 0; 0; 0
-      Min Intensity: 0.690962
+      Min Intensity: 0
       Name: layer22
       Position Transformer: XYZ
       Queue Size: 10
@@ -812,9 +813,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 199.098
+      Max Intensity: 270
       Min Color: 0; 0; 0
-      Min Intensity: 0.521293
+      Min Intensity: 0
       Name: layer23
       Position Transformer: XYZ
       Queue Size: 10
@@ -842,9 +843,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 320
       Min Color: 0; 0; 0
-      Min Intensity: 1.05131
+      Min Intensity: 0
       Name: layer24
       Position Transformer: XYZ
       Queue Size: 10
@@ -872,9 +873,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 270
       Min Color: 0; 0; 0
-      Min Intensity: 0.959578
+      Min Intensity: 0
       Name: layer25
       Position Transformer: XYZ
       Queue Size: 10
@@ -902,9 +903,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 240
       Min Color: 0; 0; 0
-      Min Intensity: 0.800268
+      Min Intensity: 0
       Name: layer26
       Position Transformer: XYZ
       Queue Size: 10
@@ -932,9 +933,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 248.406
+      Max Intensity: 240
       Min Color: 0; 0; 0
-      Min Intensity: 0.412812
+      Min Intensity: 0
       Name: layer27
       Position Transformer: XYZ
       Queue Size: 10
@@ -962,9 +963,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 270
       Min Color: 0; 0; 0
-      Min Intensity: 2.08417
+      Min Intensity: 0
       Name: layer28
       Position Transformer: XYZ
       Queue Size: 10
@@ -992,9 +993,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 240
       Min Color: 0; 0; 0
-      Min Intensity: 0.537614
+      Min Intensity: 0
       Name: layer29
       Position Transformer: XYZ
       Queue Size: 10
@@ -1022,9 +1023,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 240
       Min Color: 0; 0; 0
-      Min Intensity: 1.00002
+      Min Intensity: 0
       Name: layer30
       Position Transformer: XYZ
       Queue Size: 10
@@ -1052,9 +1053,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 350
       Min Color: 0; 0; 0
-      Min Intensity: 0.970207
+      Min Intensity: 0
       Name: layer31
       Position Transformer: XYZ
       Queue Size: 10
@@ -1082,9 +1083,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 440
       Min Color: 0; 0; 0
-      Min Intensity: 0.748773
+      Min Intensity: 0
       Name: layer32
       Position Transformer: XYZ
       Queue Size: 10
@@ -1097,10 +1098,40 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 255.832
+      Min Color: 0; 0; 0
+      Min Intensity: 0.460436
+      Name: rslidar_points
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.01
+      Style: Points
+      Topic: /rslidar_points
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: iMiev/base_link
+    Fixed Frame: rslidar
     Frame Rate: 30
   Name: root
   Tools:
@@ -1121,22 +1152,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 77.1732
+      Distance: 79.7995
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -14.2843
-        Y: 4.47678
-        Z: 14.7124
+        X: 1.52863
+        Y: -0.95445
+        Z: 5.17513
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.919796
+      Pitch: 1.5698
       Target Frame: iMiev/base_link
       Value: Orbit (rviz)
-      Yaw: 6.16944
+      Yaw: 3.13631
     Saved: ~
 Window Geometry:
   Displays:

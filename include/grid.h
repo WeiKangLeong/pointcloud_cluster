@@ -537,19 +537,23 @@ public:
                         else
                         {
                             cell.z = 0.0;
-				map_->at(size)=0;
+				map_->at(size)=-1;
                         }
                     }
                     else
                     {
                         cell.z = 0.0;
-			map_->at(size)=0;
+			map_->at(size)=-1;
                     }
 
                 }
+		else if (grid_size==1)
+		{
+			cell.z = 0.0;
+		}
                 else
                 {
-                    cell.z = 0.0;
+                    cell.z = -100.0;
                 }
 
                 cloud_3->push_back(cell);
@@ -566,10 +570,11 @@ public:
     {
         bool keep_flag;
 	int size = 0;
-        for(int cnt_m=0;cnt_m<grid_number_m_;cnt_m++)
-        {
-            for(int cnt_n=0;cnt_n<grid_number_n_;cnt_n++)
-            {
+        
+    for(int cnt_n=0;cnt_n<grid_number_n_;cnt_n++)
+    {
+		for(int cnt_m=0;cnt_m<grid_number_m_;cnt_m++)
+        	{
                 keep_flag=false;
                 int grid_size = grid_num_->at(cnt_m)->at(cnt_n)->size();
 
