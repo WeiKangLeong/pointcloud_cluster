@@ -9,6 +9,15 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/pcl_macros.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl_ros/filters/passthrough.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/PointIndices.h>
+
+#include <pcl/segmentation/extract_clusters.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl_ros/transforms.h>
 
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
@@ -31,15 +40,71 @@ tf::TransformListener *tf_listener_;
 
 std::vector<std::vector<int>* >* floor_in_grid_;
 
-std::string map_frame_;
+std::string map_frame_, base_frame_;
 int filter_integer_;
 
-pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_comeout(new pcl::PointCloud<pcl::PointXYZI>);
-pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZI>);
-pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZI>);
-pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_left_over(new pcl::PointCloud<pcl::PointXYZI>);
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_comeout(new pcl::PointCloud<pcl::PointXYZ>);
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZ>);
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_left_over(new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_floor(new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_floor_dense(new pcl::PointCloud<pcl::PointXYZ>);
+pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_map (new pcl::PointCloud<pcl::PointXYZ>);
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_minimap (new pcl::PointCloud<pcl::PointXYZ>);
+
+pcl::VoxelGrid<pcl::PointXYZ> voxel_filter;
+pcl::PassThrough<pcl::PointXYZ> pass;
+pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr dbscan_kdtree(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_points (new pcl::PointCloud<pcl::PointXYZ>);
+    if (cloud1->size()==0 || cloud2->size()==0)
+    {
+        std::cout<<"no point cloud"<<std::endl;
+    }
+    else
+    {
+        pcl::console::TicToc time;
+        time.tic ();
+
+
+        std::vector<int> pointIdxRadiusSearch;
+        std::vector<float> pointRadiusSquaredDistance;
+
+        kdtree.setInputCloud(cloud2);
+
+        for (int i=0; i<cloud1->size(); i++)
+        {
+            pcl::PointXYZ searchpoint;
+
+            searchpoint.x = cloud1->points[i].x;
+            searchpoint.y = cloud1->points[i].y;
+
+            double radius = 1.0;
+
+            if ( kdtree.radiusSearch (searchpoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 )
+            {
+        //    for (size_t i = 0; i < pointIdxRadiusSearch.size (); ++i)
+        //      std::cout << "    "  <<   cloudin->points[ pointIdxRadiusSearch[i] ].x
+        //                << " " << cloudin->points[ pointIdxRadiusSearch[i] ].y
+        //                << " " << cloudin->points[ pointIdxRadiusSearch[i] ].z
+        //                << " (squared distance: " << pointRadiusSquaredDistance[i] << ")" << std::endl;
+    //            std::cout<<"cloud_o have : "<<pointIdxRadiusSearch.size()<<" points. Kd tree takes: "<<time.toc()<<" ms."<<std::endl;
+
+            }
+            else
+            {
+                filtered_points->push_back(searchpoint);
+            }
+        }
+
+
+    }
+    return filtered_points;
+
+}
 
 void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 {
@@ -48,53 +113,73 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
     pcl::fromROSMsg (*input, *cloud_comeout);
 
-    int cloud_size = input->height * input->width;
+    //int cloud_size = input->height * input->width;
 
-    const float bad_point = std::numeric_limits<float>::quiet_NaN();
-    pcl::PointXYZI no_point;
-    no_point.x = no_point.y = no_point.z = bad_point;
+//    const float bad_point = std::numeric_limits<float>::quiet_NaN();
+//    pcl::PointXYZI no_point;
+//    no_point.x = no_point.y = no_point.z = bad_point;
 
-    for (int i=0; i<cloud_comeout->size(); i++)
-    {
-        if (!std::isnan(cloud_comeout->points[i].x))
-        {
-            cloud_comeout->points[i].intensity = i;
-        }
-    }
+//    for (int i=0; i<cloud_comeout->size(); i++)
+//    {
+//        if (!std::isnan(cloud_comeout->points[i].x))
+//        {
+//            cloud_comeout->points[i].intensity = i;
+//        }
+//    }
 
         //std::cout<<"1: "<<cloud_size<<" "<<input->data.size()<<" "<<cloud_comeout->size()<<std::endl;
 
-    tf::StampedTransform latest_imu_transform;
+    tf::StampedTransform latest_odom_transform;
     try{
-        tf_listener_->lookupTransform("wtf_odom", "wtf_base_link",
-                                      ros::Time(0), latest_imu_transform);
+        tf_listener_->lookupTransform(map_frame_, base_frame_,
+                                      ros::Time(0), latest_odom_transform);
     }catch (tf::TransformException &ex) {
         ROS_ERROR_STREAM("localizer_scan: Looking Transform Failed");
         return;
     }
 
-//    tf::Vector3 amcl_position;
-//    amcl_position = latest_imu_transform.getOrigin();
-//    double current_amcl_x = (double)amcl_position.x();
-//    double current_amcl_y = (double)amcl_position.y();
+    tf::Vector3 wheel_position = latest_odom_transform.getOrigin();
+    double mini_map_x = wheel_position.x();
+    double mini_map_y = wheel_position.y();
 
+    pass.setInputCloud (filtered_map);
+    pass.setFilterFieldName ("x");
+    pass.setFilterLimits (-10.0+wheel_position.x(), 10.0+wheel_position.x());
+    //pass.setFilterLimits (-30.0, 30.0);
+    //pass.setFilterLimitsNegative (true);
+    pass.filter (*cloud_minimap);
 
-    pcl_ros::transformPointCloud(*cloud_comeout, *cloud_in, latest_imu_transform);
+    pass.setInputCloud (cloud_minimap);
+    pass.setFilterFieldName ("y");
+    pass.setFilterLimits (-10.0+wheel_position.y(), 10.0+wheel_position.y());
+    //pass.setFilterLimits (-30.0, 30.0);
+    pass.filter (*cloud_minimap);
 
-        //std::cout<<"2: "<<cloud_comeout->size()<<" "<<cloud_in->size()<<std::endl;
+    std::cout<<"x: "<<wheel_position.x()<<" y: "<<wheel_position.y()<<" "<<cloud_comeout->size()<<std::endl;
 
-    grid_map_->filter_roadXY(cloud_in);
+    pcl_ros::transformPointCloud(*cloud_comeout, *cloud_in, latest_odom_transform);
 
-    cloud_filtered = grid_map_->GetCloud2(cloud_in);
+    std::cout<<filtered_map->size()<<" "<<cloud_minimap->size()<<" "<<cloud_in->size()<<std::endl;
 
-    tf::Transform inverse_transform;
-    inverse_transform = latest_imu_transform.inverse();
-    pcl_ros::transformPointCloud(*cloud_filtered, *cloud_left_over, inverse_transform);
-
-
-    //std::cout<<"cloud size: "<<cloud_in->size()<<" to "<<cloud_filtered->size()<<std::endl;
+    cloud_filtered = dbscan_kdtree(cloud_in, cloud_minimap);
 
     if (cloud_filtered->size()>0)
+    {
+        tf::Transform inverse_transform;
+        inverse_transform = latest_odom_transform.inverse();
+        pcl_ros::transformPointCloud(*cloud_filtered, *cloud_left_over, inverse_transform);
+
+        sensor_msgs::PointCloud2 filter_pcl2;
+        pcl::toROSMsg (*cloud_left_over, filter_pcl2);
+        filter_pcl2.header = input->header;
+        pub_move.publish(filter_pcl2);
+
+
+        std::cout<<"cloud size: "<<cloud_in->size()<<" to "<<cloud_filtered->size()<<std::endl;
+    }
+
+
+ /*   if (cloud_filtered->size()>0)
     {
 	sensor_msgs::PointCloud2 output3;
 	pcl::toROSMsg (*cloud_filtered, output3);
@@ -116,9 +201,7 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
             cloud_rs->points[cloud_left_over->points[k].intensity] = cloud_left_over->points[k];
         }
 
-        /*std::cout<<"cloud_comeout: "<<cloud_comeout->size()<<" cloud_in: "<<cloud_in->size()<<" cloud_filtered: "<<
-                   cloud_filtered->size()<<" cloud_leftover: "<<cloud_left_over->size()<<" cloud_rs: "<<cloud_rs->size()
-                <<" "<<valid<<std::endl;*/
+
 
         sensor_msgs::PointCloud2 output2;
         pcl::toROSMsg (*cloud_rs, output2);
@@ -133,15 +216,12 @@ void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
             std::cout<<"compare size: "<<input->data.size()<<" "<<output2.data.size()<<std::endl;
 
-    //    sensor_msgs::PointCloud2 output4;
-    //    pcl::toROSMsg (*cloud_left_over, output4);
-    //    output4.header.frame_id = "map";
-    //    pub_cluster.publish (output4);
-    }
 
-    grid_map_->ClearGrid();
-    cloud_filtered.reset(new pcl::PointCloud<pcl::PointXYZI>);
-    cloud_left_over.reset(new pcl::PointCloud<pcl::PointXYZI>);
+    }
+*/
+    //grid_map_->ClearGrid();
+    cloud_filtered.reset(new pcl::PointCloud<pcl::PointXYZ>);
+    cloud_left_over.reset(new pcl::PointCloud<pcl::PointXYZ>);
 
     //std::cout<<"Time used: "<<time.toc()<<std::endl;
 
@@ -170,7 +250,7 @@ void map_2d_cb(nav_msgs::OccupancyGrid msg)
             {
                 floor_in_grid_->at(i)->at(j) = msg.data[k];
                 k++;
-                if (floor_in_grid_->at(i)->at(j)==filter_integer_)
+                if (floor_in_grid_->at(i)->at(j)==100)
                 {
                     pcl::PointXYZ centroid;
                     centroid.x = j*floor_resolution;
@@ -183,11 +263,17 @@ void map_2d_cb(nav_msgs::OccupancyGrid msg)
 
         //grid_map_->ArrangeFloorandStoreXY(cloud_floor);
 
+
+        voxel_filter.setLeafSize (0.5, 0.5, 0.5);
+        voxel_filter.setInputCloud (cloud_floor);
+        voxel_filter.filter (*filtered_map);
+
         sensor_msgs::PointCloud2 output;
-        pcl::toROSMsg (*cloud_floor, output);
+        pcl::toROSMsg (*filtered_map, output);
         output.header.frame_id = map_frame_;
         pub_floor.publish(output);
-        std::cout<<cloud_floor->size()<<" points map loaded to pointcloud"<<std::endl;
+        std::cout<<filtered_map->size()<<" points map loaded to pointcloud"<<std::endl;
+        //filtered_map.reset(new pcl::PointCloud<pcl::PointXYZ>);
         cloud_floor.reset(new pcl::PointCloud<pcl::PointXYZ>);
         cloud_floor_dense.reset(new pcl::PointCloud<pcl::PointXYZ>);
 
@@ -207,18 +293,19 @@ int main (int argc, char** argv)
     map_frame_ = "map";
     filter_integer_ = 0;
     priv_nh.getParam("map_frame", map_frame_);
+    priv_nh.getParam("base_frame", base_frame_);
     priv_nh.getParam("filter_integer", filter_integer_);
 
-    grid_map_ = new Grid(RANGE_X, RANGE_Y, 0, RES, 0, 0);
+    //grid_map_ = new Grid(RANGE_X, RANGE_Y, 0, RES, 0, 0);
 
     map_created_=false;
 
     tf_listener_ = new tf::TransformListener();
 
     ros::Subscriber sub_cloud = nh.subscribe<sensor_msgs::PointCloud2> ("origin_input", 1, pointcloud_cb);
-    ros::Subscriber sub_map = nh.subscribe<nav_msgs::OccupancyGrid> ("/map_mask", 1, map_2d_cb);
+    ros::Subscriber sub_map = nh.subscribe<nav_msgs::OccupancyGrid> ("map_mask", 1, map_2d_cb);
 
-    pub_move = nh.advertise<sensor_msgs::PointCloud2> ("/cloud_at_origin", 1);
+    pub_move = nh.advertise<sensor_msgs::PointCloud2> ("/cloud_left", 1);
     pub_floor = nh.advertise<sensor_msgs::PointCloud2> ("/floor_points", 1);
     pub_static = nh.advertise<sensor_msgs::PointCloud2> ("/cloud_out", 1);
     //pub_cluster = nh.advertise<sensor_msgs::PointCloud2> ("/cloud_left", 1);

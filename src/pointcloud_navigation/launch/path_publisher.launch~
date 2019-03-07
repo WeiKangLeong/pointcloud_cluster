@@ -1,0 +1,7 @@
+<launch>
+	<node pkg="pointcloud_navigation" type="path_reader" name="path_reader" output="screen" >
+		<param name="path_file_name" value="/home/smaug/Downloads/trajS.txt" />
+		<param name="path_topic" value="/wheelchair/route_plan" />
+		<param name="frame_id" value="/wheelchair/map" />
+	</node>
+</launch>

@@ -472,24 +472,24 @@ main (int argc, char** argv)
             pt_on_map=cloud_gridmap->points[lb];
             cloud_grid->push_back(pt_on_map);
         }
-        else if (cloud_gridmap->points[lb].z==-1)
-        {
-            double grid_x = cloud_gridmap->points[lb].x;// + range_x/2;
-            double grid_y = cloud_gridmap->points[lb].y;// + range_y/2;
+//        else if (cloud_gridmap->points[lb].z==-1)
+//        {
+//            double grid_x = cloud_gridmap->points[lb].x;// + range_x/2;
+//            double grid_y = cloud_gridmap->points[lb].y;// + range_y/2;
 
-            int place = int(grid_x/resolution_)*msg.info.height+int(grid_y/resolution_);
-            int map_place = int(grid_y/resolution_)*msg.info.width+int(grid_x/resolution_);
+//            int place = int(grid_x/resolution_)*msg.info.height+int(grid_y/resolution_);
+//            int map_place = int(grid_y/resolution_)*msg.info.width+int(grid_x/resolution_);
 
-            if (map_place>msg.data.size())
-            {
-                std::cout<<"pixel number: "<<map_place<<" map size: "<<msg.data.size()<<std::endl;
-            }
+//            if (map_place>msg.data.size())
+//            {
+//                std::cout<<"pixel number: "<<map_place<<" map size: "<<msg.data.size()<<std::endl;
+//            }
 
-            else
-            {
-                msg.data[map_place] = 0;
-            }
-        }
+//            else
+//            {
+//                msg.data[map_place] = 0;
+//            }
+//        }
     }
 
     sensor_msgs::PointCloud2 outputn, outputm;

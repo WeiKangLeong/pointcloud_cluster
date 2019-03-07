@@ -10,10 +10,12 @@
 		<param name="base_frame_id" value="iMiev/base_link" />
 		<param name="odom_frame_id" value="iMiev/odom" />
 		<param name="global_frame_id" value="iMiev/map" />
+		<param name="icp_frame_id" value="iMiev/icp" />
+		<param name="icp_tf" value="false" />
 		<param name="icp_iteration" value="5" />
 		<param name="icp_distance" value="2.0" />
 		<param name="icp_filter_size" value="0.5" />
-		<remap from="input" to="rslidar_points" />
+		<remap from="input" to="/rslidar_points" />
 	</node>
 
 	<node pkg="pointcloud_registration" type="show_map" name="show_map" output="screen">
@@ -22,10 +24,10 @@
 	</node>
 
 
-	<!--<node pkg="map_server" type="map_server" name="grid_cell_map" args="$(find pointcloud_registration)/map/utown_map.yaml" >
-		<param name="frame_id" value="wheelchair/map" />
-	</node>-->
-
+<!--	<node pkg="map_server" type="map_server" name="grid_cell_map" args="/home/smaug/SvgPath/utown_2018.yaml" >
+		<param name="frame_id" value="iMiev/map" />
+	</node>
+-->
 
 	
 </launch>

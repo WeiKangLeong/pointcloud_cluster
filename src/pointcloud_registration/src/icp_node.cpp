@@ -104,9 +104,6 @@ class ICPNode
     void initial_pose_cb_(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& posing);
     void map_cb_(const sensor_msgs::PointCloud2ConstPtr& map);
 
-    //parameter for what odom to use
-    std::string odom_frame_id_;
-
     //paramater to store latest odom pose
     tf::Stamped<tf::Pose> latest_odom_pose_;
 
@@ -119,6 +116,9 @@ class ICPNode
     //parameter for what base to use
     std::string base_frame_id_;
     std::string global_frame_id_;
+    //parameter for what odom to use
+    std::string odom_frame_id_;
+    std::string icp_frame_id_;
 
     std::string map_location;
 
@@ -178,33 +178,35 @@ main(int argc, char** argv)
 
 ICPNode::ICPNode()
 {
-  // Grab params off the param server
+    // Grab params off the param server
 
 
-  tfb_ = new tf::TransformBroadcaster();
-  tf_ = new TransformListenerWrapper();
+    tfb_ = new tf::TransformBroadcaster();
+    tf_ = new TransformListenerWrapper();
 
-  //icp_received_ = nh_.subscribe ("icp_odom", 1, &ICPNode::icpReceived_, this);
-  input_pointcloud_ = nh_.subscribe <sensor_msgs::PointCloud2> ("input", 1, &ICPNode::pointcloud_cb_, this);
-  input_localize_ = nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped> ("/initialpose", 1, &ICPNode::initial_pose_cb_, this);
-  input_map_ = nh_.subscribe<sensor_msgs::PointCloud2> ("/full_map", 1, &ICPNode::map_cb_, this);
+    //icp_received_ = nh_.subscribe ("icp_odom", 1, &ICPNode::icpReceived_, this);
+    input_pointcloud_ = nh_.subscribe <sensor_msgs::PointCloud2> ("input", 1, &ICPNode::pointcloud_cb_, this);
+    input_localize_ = nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped> ("/initialpose", 1, &ICPNode::initial_pose_cb_, this);
+    input_map_ = nh_.subscribe<sensor_msgs::PointCloud2> ("/full_map", 1, &ICPNode::map_cb_, this);
 
-  pub_icp_odom_ = nh_.advertise <nav_msgs::Odometry> ("icp_odom", 1);
-  pub_input_odom_ = nh_.advertise <nav_msgs::Odometry> ("input_odom", 1);
-  pub_aligned_ = nh_.advertise <sensor_msgs::PointCloud2> ("/velo_cloud", 1);
-  pub_minimap_ = nh_.advertise <sensor_msgs::PointCloud2> ("/minimap", 1);
+    pub_icp_odom_ = nh_.advertise <nav_msgs::Odometry> ("icp_odom", 1);
+    pub_input_odom_ = nh_.advertise <nav_msgs::Odometry> ("input_odom", 1);
+    pub_aligned_ = nh_.advertise <sensor_msgs::PointCloud2> ("/velo_cloud", 1);
+    pub_minimap_ = nh_.advertise <sensor_msgs::PointCloud2> ("/minimap", 1);
 
-  ros::NodeHandle priv_nh("~");
+    ros::NodeHandle priv_nh("~");
 
-  ROS_INFO("start");
+    ROS_INFO("start");
 
-  priv_nh.getParam("map_location", map_location);
-  priv_nh.getParam("base_frame_id", base_frame_id_);
-  priv_nh.getParam("global_frame_id", global_frame_id_);
-  priv_nh.getParam("odom_frame_id", odom_frame_id_);
-  priv_nh.getParam("icp_iteration", icp_max_iter_);
-  priv_nh.getParam("icp_distance", icp_max_distance_);
-  priv_nh.getParam("icp_filter_size", icp_filter_size_);
+
+    priv_nh.getParam("map_location", map_location);
+    priv_nh.getParam("base_frame_id", base_frame_id_);
+    priv_nh.getParam("global_frame_id", global_frame_id_);
+    priv_nh.getParam("odom_frame_id", odom_frame_id_);
+    priv_nh.getParam("icp_iteration", icp_max_iter_);
+    priv_nh.getParam("icp_distance", icp_max_distance_);
+    priv_nh.getParam("icp_filter_size", icp_filter_size_);
+    priv_nh.getParam("icp_frame_id", icp_frame_id_);
 
     transform_tolerance_ = ros::Duration(0.3);
 
@@ -217,6 +219,7 @@ ICPNode::ICPNode()
     chance_ = 0;
     odom_start_ = false;
     location_confirm_ = false;
+
 
     transform.setOrigin(tf::Vector3(0.0,0.0,0.0));
     transform.setRotation(tf::Quaternion(0.0,0.0,0.0,1.0));
@@ -364,11 +367,11 @@ Eigen::Matrix4f ICPNode::localize()
     std::cout << "ICP X: " << compare_matrix(0,3)<< " Y: " << compare_matrix(1,3)<< " Z: " << compare_matrix(2,3)<< std::endl;
     std::cout << "odomX: " << difference_pose.x()<< " Y: " << difference_pose.y()<< " Z: " << difference_pose.z()<< std::endl;
 
-    if (difference_pose.x()+difference_pose.y()==0.0)
-    {
-        second_score = 0.0;
-    }
-    std::cout << "second_score = "<< second_score<<std::endl;
+//    if (difference_pose.x()+difference_pose.y()==0.0)
+//    {
+//        second_score = 0.0;
+//    }
+//    std::cout << "second_score = "<< second_score<<std::endl;
 
     if (chance_==5)
     {
@@ -603,13 +606,13 @@ void ICPNode::pointcloud_cb_ (const sensor_msgs::PointCloud2ConstPtr& input)
         icp_odom.pose.pose.position.z = new_nav_position.z();
 //        input_odom.pose.pose.position.z = wheel_in_z;
 
-        std::cout<<"x: "<<new_nav_position.x()<<" y: "<<new_nav_position.y()<<" z: "<<new_nav_position.z()<<std::endl;
-        std::cout<<"R: "<<r<<" P: "<<p<<" Y: "<<y<<std::endl;
- /*       input_odom.header.frame_id = global_frame_id_;
-        input_odom.header.stamp = input->header.stamp;
+//        std::cout<<"x: "<<new_nav_position.x()<<" y: "<<new_nav_position.y()<<" z: "<<new_nav_position.z()<<std::endl;
+//        std::cout<<"R: "<<r<<" P: "<<p<<" Y: "<<y<<std::endl;
+        icp_odom.header.frame_id = global_frame_id_;
+        icp_odom.header.stamp = input->header.stamp;
 
-        pub_icp_odom.publish(input_odom);
-
+        pub_icp_odom_.publish(icp_odom);
+/*
         geometry_msgs::PoseWithCovarianceStamped icp_pose;
         icp_pose.header = input_odom.header;
         icp_pose.header.stamp = input->header.stamp;
@@ -617,38 +620,45 @@ void ICPNode::pointcloud_cb_ (const sensor_msgs::PointCloud2ConstPtr& input)
 
         pub_localize.publish(icp_pose);*/
 
-        tf::Stamped<tf::Pose> odom_to_map;
-        try
-        {
-          tf::Stamped<tf::Pose> tmp_tf_stamped (transform.inverse(),
-                                                input->header.stamp,
-                                                base_frame_id_);
-          this->tf_->transformPose(odom_frame_id_,
-                                   tmp_tf_stamped,
-                                   odom_to_map);
+
+            tf::Stamped<tf::Pose> odom_to_map;
+            try
+            {
+              tf::Stamped<tf::Pose> tmp_tf_stamped (transform.inverse(),
+                                                    input->header.stamp,
+                                                    base_frame_id_);
+              this->tf_->transformPose(odom_frame_id_,
+                                       tmp_tf_stamped,
+                                       odom_to_map);
+            }
+            catch(tf::TransformException)
+            {
+              ROS_DEBUG("Failed to subtract base to odom transform");
+              return;
+            }
+
+            latest_tf_ = tf::Transform(tf::Quaternion(odom_to_map.getRotation()),
+                                       tf::Point(odom_to_map.getOrigin()));
+            latest_tf_valid_ = true;
+
+
+              // We want to send a transform that is good up until a
+              // tolerance time so that odom can be used
+              ros::Time transform_expiration = (input->header.stamp +
+                                                transform_tolerance_);
+              tf::StampedTransform tmp_tf_stamped(latest_tf_.inverse(),
+                                                  transform_expiration,
+                                                  global_frame_id_, odom_frame_id_);
+              this->tfb_->sendTransform(tmp_tf_stamped);
         }
-        catch(tf::TransformException)
-        {
-          ROS_DEBUG("Failed to subtract base to odom transform");
-          return;
-        }
 
-        latest_tf_ = tf::Transform(tf::Quaternion(odom_to_map.getRotation()),
-                                   tf::Point(odom_to_map.getOrigin()));
-        latest_tf_valid_ = true;
+            //this->tfb_->sendTransform(tf::StampedTransform(transform, input->header.stamp, global_frame_id_, icp_frame_id_));
 
 
-          // We want to send a transform that is good up until a
-          // tolerance time so that odom can be used
-          ros::Time transform_expiration = (input->header.stamp +
-                                            transform_tolerance_);
-          tf::StampedTransform tmp_tf_stamped(latest_tf_.inverse(),
-                                              transform_expiration,
-                                              global_frame_id_, odom_frame_id_);
-          this->tfb_->sendTransform(tmp_tf_stamped);
 
 
-        }
+
+
 
         sensor_msgs::PointCloud2 output2;
         pcl_ros::transformPointCloud (*cloud_in, *final_cloud, transform);

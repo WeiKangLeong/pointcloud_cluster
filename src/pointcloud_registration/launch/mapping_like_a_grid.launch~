@@ -1,0 +1,16 @@
+<launch>
+	<node pkg = "pointcloud_filter" type="pointcloud_filter_vertical_feature" name="filter_vertical_feature">
+		<remap from = "cloud_input" to = "/rslidar_points" />
+		<remap from = "vertical_points" to = "/vertical_cloud" />
+		<param name = "base_frame" value = "iMiev/base_link" />
+	</node>
+
+	<node pkg="pointcloud_registration" type="grid_map_registration" name="gridmap" output="screen" >
+		<remap from="input" to="/vertical_cloud" />
+		<param name = "base_frame_id" value="iMiev/base_link"/>
+		<param name = "global_frame_id" value="iMiev/map"/>
+		<param name = "odom_frame_id" value="iMiev/odom"/>
+		<param name = "resolution" value="0.1" />
+	</node>
+
+</launch>

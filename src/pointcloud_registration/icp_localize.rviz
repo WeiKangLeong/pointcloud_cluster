@@ -6,10 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Odometry1
-        - /Odometry2
-        - /PointCloud25
-        - /Path1
       Splitter Ratio: 0.5
     Tree Height: 775
   - Class: rviz/Selection
@@ -30,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -249,7 +245,7 @@ Visualization Manager:
       Class: rviz/PointCloud2
       Color: 255; 255; 255
       Color Transformer: FlatColor
-      Decay Time: 1000
+      Decay Time: 0
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -297,7 +293,7 @@ Visualization Manager:
       Draw Behind: false
       Enabled: true
       Name: Map
-      Topic: /iMiev/map
+      Topic: /grid_map
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -324,6 +320,15 @@ Visualization Manager:
       Topic: /iMiev/particlecloud
       Unreliable: false
       Value: true
+    - Alpha: 0.7
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: false
+      Name: Map
+      Topic: /map
+      Unreliable: false
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -356,11 +361,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 10
+      Scale: 1.02272
       Target Frame: iMiev/base_link
       Value: TopDownOrtho (rviz)
-      X: -9.56273
-      Y: -35.9334
+      X: 357.63
+      Y: 199.366
     Saved: ~
 Window Geometry:
   Displays:

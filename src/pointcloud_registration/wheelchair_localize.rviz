@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Marker1/Status1
       Splitter Ratio: 0.5
     Tree Height: 775
   - Class: rviz/Selection
@@ -111,8 +112,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 9.49468
-        Min Value: -5.1191
+        Max Value: 8.68398
+        Min Value: -3.92576
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -181,19 +182,19 @@ Visualization Manager:
     - Angle Tolerance: 0.1
       Class: rviz/Odometry
       Color: 85; 255; 0
-      Enabled: true
+      Enabled: false
       Keep: 10000
       Length: 1
       Name: Odometry
       Position Tolerance: 0.1
       Topic: /icp_odom
-      Value: true
+      Value: false
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /box
       Name: Marker
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -231,7 +232,7 @@ Visualization Manager:
       Marker Topic: /arrow
       Name: Marker
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -245,7 +246,7 @@ Visualization Manager:
       Class: rviz/PointCloud2
       Color: 255; 255; 255
       Color Transformer: FlatColor
-      Decay Time: 1000
+      Decay Time: 0
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -291,11 +292,11 @@ Visualization Manager:
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: false
-      Enabled: true
+      Enabled: false
       Name: Map
       Topic: /map
       Unreliable: false
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -320,22 +321,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 309.904
+      Distance: 331.618
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 46.4512
-        Y: 58.7295
-        Z: -82.953
+        X: -27.5426
+        Y: -39.6544
+        Z: -82.8226
       Name: Current View
       Near Clip Distance: 0.01
       Pitch: 1.5698
-      Target Frame: <Fixed Frame>
+      Target Frame: wheelchair/base_link
       Value: Orbit (rviz)
-      Yaw: 1.57041
+      Yaw: 1.54041
     Saved: ~
 Window Geometry:
   Displays:

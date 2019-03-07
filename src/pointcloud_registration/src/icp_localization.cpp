@@ -82,7 +82,7 @@ bool indoor=false;
 
 int danger,chance;
 
-std::string base_frame_id_, global_frame_id_, odom_frame_id_;
+std::string base_frame_id_, global_frame_id_, odom_frame_id_, icp_frame_id_;
 
 //private parameters
 int icp_max_iter_;
@@ -284,7 +284,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         pass.setInputCloud (cloud_in);
         pass.setFilterFieldName ("x");
         //pass.setFilterLimits (-30.0+now_transform.x(), 30.0+now_transform.x());
-        pass.setFilterLimits (-30.0, 30.0);
+        pass.setFilterLimits (0.0, 30.0);
         //pass.setFilterLimitsNegative (true);
         pass.filter (*cloud_in);
 
@@ -467,10 +467,11 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         //tf::StampedTransform odom_transform_stamped(transform, input->header.stamp, global_frame_id_, base_frame_id_);
         //tfb->sendTransform(odom_transform_stamped);
 
+        tfb->sendTransform(tf::StampedTransform(transform, input->header.stamp, global_frame_id_, icp_frame_id_));
         }
 
         sensor_msgs::PointCloud2 output2;
-        pcl_ros::transformPointCloud (*cloud_in, *final_cloud, transform);
+        pcl_ros::transformPointCloud (*cloud_transform, *final_cloud, transform);
 
         pcl::toROSMsg (*final_cloud, output2);
         output2.header.frame_id = global_frame_id_;
@@ -538,6 +539,7 @@ int main(int argc, char** argv)
         priv_nh.getParam("base_frame_id", base_frame_id_);
         priv_nh.getParam("global_frame_id", global_frame_id_);
         priv_nh.getParam("odom_frame_id", odom_frame_id_);
+        priv_nh.getParam("icp_frame_id", icp_frame_id_);
         priv_nh.getParam("icp_iteration", icp_max_iter_);
         priv_nh.getParam("icp_distance", icp_max_distance_);
         priv_nh.getParam("icp_filter_size", icp_filter_size_);

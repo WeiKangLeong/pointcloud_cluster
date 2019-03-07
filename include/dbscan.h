@@ -209,7 +209,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>* dbscan_cluster(pcl::PointCloud
             int cluster_size_now = cluster_cloud_->size();
             //std::cout<<"cluster "<<cluster_size_now<<" centroid: "<<centroid.x<<" "<<centroid.y<<" "<<centroid.z<<" with "<<cloud_1->size()<<" points."<<std::endl;
 
-            if (centroid.z>=2.5)
+            /*if (centroid.z>=2.5)
             {
                 std::cout<<"Cluster centroid too high."<<std::endl;
             }
@@ -219,7 +219,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>* dbscan_cluster(pcl::PointCloud
             }
            
             else
-            {
+            {*/
                 
 
                 //find_minimum_oriented_bounding_box(cloud_1);
@@ -232,7 +232,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>* dbscan_cluster(pcl::PointCloud
                 //cloud_total->insert(cloud_total->end(),cloud_1->begin(), cloud_1->end());
 
 
-            }
+            //}
 
         }
         else
@@ -435,7 +435,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr>* dbscan_cluster_intensity(pcl:
         centroid.y=0.0;
         centroid.z=0.0;
 
-        if (cluster_1->size()>3)
+        if (cluster_1->size()>5)
         {
             for (int cloud_pt=0; cloud_pt<cloudin_cluster->size(); cloud_pt++)
             {
@@ -470,7 +470,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr>* dbscan_cluster_intensity(pcl:
             int cluster_size_now = cluster_cloud_->size();
             //std::cout<<"cluster "<<cluster_size_now<<" centroid: "<<centroid.x<<" "<<centroid.y<<" "<<centroid.z<<" with "<<cloud_1->size()<<" points."<<std::endl;
 
-            if (centroid.z>=2.5)
+            /*if (centroid.z>=2.5)
             {
                 std::cout<<"Cluster centroid too high."<<std::endl;
             }
@@ -480,7 +480,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr>* dbscan_cluster_intensity(pcl:
             }
 
             else
-            {
+            {*/
 
 
                 //find_minimum_oriented_bounding_box(cloud_1);
@@ -493,7 +493,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr>* dbscan_cluster_intensity(pcl:
                 //cloud_total->insert(cloud_total->end(),cloud_1->begin(), cloud_1->end());
 
 
-            }
+            //}
 
         }
         else

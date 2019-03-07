@@ -1,0 +1,11 @@
+<launch>
+	<node pkg="gmapping" type="slam_gmapping" name="g_map" output="screen" >
+		<param name="odom_frame" value="iMiev/odom" />
+		<param name="base_frame" value="iMiev/base_link" />
+		<param name="map_frame" value="iMiev/map" />
+		<remap from="scan" to="/iMiev/front_bottom_scan_filtered" />
+	</node>
+
+	
+
+</launch>

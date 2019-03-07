@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   message_filters
+  jsk_recognition_msgs
 )
 
 find_package(OpenCV REQUIRED)
@@ -157,6 +158,7 @@ add_executable(pointcloud_compress_map src/pointcloud_compress_map.cpp)
 add_executable(pointcloud_filter_vertical_feature src/pointcloud_filter_vertical_feature.cpp)
 add_executable(pointcloud_grid_clustering src/pointcloud_grid_clustering.cpp)
 add_executable(pointcloud_position_clustering src/pointcloud_position_clustering.cpp)
+add_executable(pointcloud_cluster_with_mask src/pointcloud_cluster_with_mask.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -180,4 +182,5 @@ target_link_libraries(pointcloud_compress_map ${catkin_LIBRARIES})
 target_link_libraries(pointcloud_filter_vertical_feature ${catkin_LIBRARIES})
 target_link_libraries(pointcloud_grid_clustering ${catkin_LIBRARIES})
 target_link_libraries(pointcloud_position_clustering ${catkin_LIBRARIES})
+target_link_libraries(pointcloud_cluster_with_mask ${catkin_LIBRARIES})
 

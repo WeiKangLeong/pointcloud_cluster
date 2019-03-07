@@ -23,7 +23,16 @@
 #include <pcl/common/geometry.h>
 #include <visualization_msgs/Marker.h>
 
+#include <opencv2/opencv.hpp>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 ros::Publisher pub, pub_cylinder, pub_full_map;
+
+using namespace cv;
 
 int
 main (int argc, char** argv)
@@ -76,7 +85,9 @@ main (int argc, char** argv)
     int sum_size=0;
     //std::cout<<cloud_in->size()<<std::endl;
 
-    if (cloud_in->size()<400000)
+    sensor_msgs::Image pt_image;
+
+    if (cloud_in->size()<4000000)
     {
         sensor_msgs::PointCloud2 output;
         pcl::toROSMsg (*cloud_in, output);
@@ -85,7 +96,7 @@ main (int argc, char** argv)
     }
     else
     {
-        int divide = (cloud_in->size()/100000);
+        int divide = (cloud_in->size()/1000000);
         double x_range = max_point.x - min_point.x;
         double y_range = max_point.y - min_point.y;
 
@@ -114,6 +125,7 @@ main (int argc, char** argv)
         }
 
     }
+
 
     std::cout<<"cloud in size: "<<cloud_in->size()<<" and "<<sum_size<<" points."<<std::endl;
 

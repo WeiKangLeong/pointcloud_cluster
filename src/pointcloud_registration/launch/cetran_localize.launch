@@ -46,15 +46,15 @@
 		<param name = "base_frame" value = "iMiev/base_link" />
 	</node>
 
-<!--
-	<node pkg="amcl_pc" type="amcl" name="amcl_pc" output="screen">
+<!---->
+	<node pkg="amcl_pc" type="amcl_pc" name="amcl_pc" output="screen">
 		<remap from="pc" to="/iMiev/pcl_pointnormal_out"/>
 		<param name="odom_frame_id" value="iMiev/odom" />
 		<param name="base_frame_id" value="iMiev/base_link" />
 		<param name="global_frame_id" value="iMiev/map" />
 		<param name="laser_model_type" value="pc_likelihood_field" />
 	</node>
--->
+
 
 <!--    IF USING 2D LOCALIZATION WITH 2D LIDAR 
 
@@ -81,10 +81,10 @@
 		<remap from = "odom" to = "iMiev/odom" />
 	</node>
 -->
-<!--	<node pkg="map_server" type="map_server" name="grid_cell_map" args="$(find pointcloud_registration)/map/newmap.yaml">
+<!---->	<node pkg="map_server" type="map_server" name="grid_cell_map" args="$(find pointcloud_registration)/map/newmap.yaml">
 		<param name="frame_id" value="iMiev/map" />
 	</node> 
--->
+
 	<node name="global_scan" pkg = "pointcloud_registration" type="scan_matching" output="screen">
 		<remap from="input" to="/vertical_points" />
 		<remap from="full_map" to="cloud_map"/>

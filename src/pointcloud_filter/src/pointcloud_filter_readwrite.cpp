@@ -133,19 +133,19 @@ main (int argc, char** argv)
     Eigen::Quaternionf orientation = Eigen::Quaternionf::Identity();
 //    int precision=8;
 //    bool use_camera=false;
-
-    pcl::io::loadPCDFile("/home/smaug/Desktop/Raw Data/utown_3d/loam_utown_clean.pcd",*cloud_in);
-    std::cout<<"loaded map ( "<<cloud_in->size()<<" ) in pcd"<<std::endl;
-
 */
-/*  std::cout<<"map loaded"<<std::endl;
+    pcl::io::loadPCDFile("/home/smaug/Desktop/Raw Data/190211_utown/utown_road_new.pcd", *cloud_largemap);
+//    std::cout<<"loaded map ( "<<cloud_in->size()<<" ) in pcd"<<std::endl;
+
+
+  std::cout<<"map loaded"<<std::endl;
     pcl::VoxelGrid<pcl::PointXYZ> approximate_voxel_filter;
     approximate_voxel_filter.setInputCloud (cloud_largemap);
-    approximate_voxel_filter.setLeafSize (0.2, 0.2, 0.2);
+    approximate_voxel_filter.setLeafSize (0.5, 0.5, 0.5);
     approximate_voxel_filter.filter (*cloud_filtered);
-    pcl::io::savePCDFileBinaryCompressed("/home/smaug/loam_cleantech_filtered.pcd",*cloud_filtered);
+    pcl::io::savePCDFileBinaryCompressed("/home/smaug/Desktop/Raw Data/190211_utown/utown_road_mask.pcd",*cloud_filtered);
     std::cout<<"map filtered"<<std::endl;
-
+/*
 //    pply.write("/home/smaug/catkin_ws/src/simmobility/subsegment.ply",cloud_in,origin,orientation,false,true);
 //    std::cout<<"saved map in ply"<<std::endl;
 //    //cloud_in.clear();

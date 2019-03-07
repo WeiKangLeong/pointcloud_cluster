@@ -22,6 +22,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   dynamic_reconfigure
   interactive_markers
+  laser_geometry
+  cv_bridge
+  image_geometry
+  image_transport
 )
 
 find_package(Boost REQUIRED)
@@ -133,6 +137,7 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -153,7 +158,7 @@ include_directories(
 add_executable (icp_localize src/icp_localization.cpp)
 target_link_libraries(icp_localize ${catkin_LIBRARIES})
 add_executable (show_map src/show_map.cpp)
-target_link_libraries(show_map ${catkin_LIBRARIES})
+target_link_libraries(show_map ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_executable (icp_globalize src/icp_global_localization.cpp)
 target_link_libraries(icp_globalize ${catkin_LIBRARIES})
 add_executable (icp_node src/icp_node.cpp)
@@ -162,6 +167,8 @@ add_executable (scan_matching src/scan_matching.cpp)
 target_link_libraries (scan_matching ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_executable (scan_accumulation src/scan_accumulation.cpp)
 target_link_libraries (scan_accumulation ${catkin_LIBRARIES})
+add_executable (grid_map_registration src/grid_map_registration.cpp)
+target_link_libraries (grid_map_registration ${catkin_LIBRARIES})
 
 
 ## Rename C++ executable without prefix
