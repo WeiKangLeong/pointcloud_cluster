@@ -8,10 +8,14 @@ Compiled and tested in **ROS Indigo** and **Kinetic** with **catkin_make**
 Point Cloud functions:
 - PointCloud Filter
   - Vertical Feature Extraction
+  - Object Detection with Mask Filtering
+  - Store point cloud to PCD format
 - PointCloud Registration
   - ICP localization
   - Read and show map from PCD format
   - Global localization (takes very long time as it is repeatedly iterating on every position on the map)
+  
+The map and mask using in this repo is generated from **LOAM** ( https://github.com/laboshinl/loam_velodyne )
   
 This repository is to enhance the capability of autonomous vehicles in **Singapore-MIT Alliance for Research and Technology - Future Urban Mobility - Autonomous Vehicle Group** which is funded by **National Research Funding**. The work has been published in **Development of A Self-Driving Personal Mobility Vehicle** by LEONG Wei Kang's Master Thesis in **National University of Singapore**.
 
