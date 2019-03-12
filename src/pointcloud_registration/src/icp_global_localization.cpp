@@ -40,6 +40,11 @@
 #include <pcl/console/time.h>   // TicToc
 #include <pcl/common/common.h>
 
+#include "include/grid.h"
+
+Grid * grid_scan;
+Grid * grid_map;
+
 ros::Publisher pub_icp_odom, pub_input_odom, pub_particle_odom, pub_map, pub_aligned, pub_minimap, pub_pointcloud, vis_pub, pub_localize;
 
 //typedef pcl::PointXYZI PointT;
@@ -89,7 +94,7 @@ bool indoor=false;
 
 int danger,chance;
 
-std::string base_frame_id_, global_frame_id_, odom_frame_id_, map_location, file_location;
+std::string base_frame_id_, global_frame_id_, odom_frame_id_, map_location, file_location, filter_radius_;
 
 void write_to_file(double p_x, double p_y, int degree, double score)
 {
@@ -344,15 +349,13 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
     pcl::fromROSMsg (*input, *cloud_in);
     pass.setInputCloud (cloud_in);
     pass.setFilterFieldName ("x");
-    //pass.setFilterLimits (-30.0+now_transform.x(), 30.0+now_transform.x());
-    pass.setFilterLimits (-30.0, 30.0);
+    pass.setFilterLimits (-filter_radius_, filter_radius_);
     //pass.setFilterLimitsNegative (true);
     pass.filter (*cloud_in);
 
     pass.setInputCloud (cloud_in);
     pass.setFilterFieldName ("y");
-    //pass.setFilterLimits (-30.0+now_transform.y(), 30.0+now_transform.y());
-    pass.setFilterLimits (-30.0, 30.0);
+    pass.setFilterLimits (-filter_radius_, filter_radius_);
     pass.filter (*cloud_in);
     std::cout<<"scan is in"<<std::endl;
     voxel_filter.setLeafSize (0.2, 0.2, 0.2);
@@ -435,11 +438,15 @@ int main(int argc, char** argv)
 	ROS_INFO("start");
 	
 	std::string map_location;
+	
+	filter_radius_ = 30.0;
+	
 	priv_nh.getParam("map_location", map_location);
         priv_nh.getParam("file_location", file_location);
         priv_nh.getParam("base_frame_id", base_frame_id_);
         priv_nh.getParam("global_frame_id", global_frame_id_);
         priv_nh.getParam("odom_frame_id", odom_frame_id_);
+	priv_nh.getParam("filter_radius", filter_radius_);
 
         myfile.open ("/home/weikang/weikang_ws/src/pointcloud_cluster/src/pointcloud_registration/map/kidnap_pose.txt");
         myfile<<"pose_x pose_y degree score\n";
@@ -461,6 +468,9 @@ int main(int argc, char** argv)
     pub_localize = nh.advertise<geometry_msgs::PoseWithCovarianceStamped> ("/initial_pose", 1);
 
     result = 100.0;
+	
+	grid_map = new Grid(filter_radius_*2, filter_radius_*2, 0, RES, 0.0, 0.0);
+	grid_scan = new Grid(filter_radius_*2, filter_radius_*2, 0, RES, 0.0, 0.0);
 
     pcl::io::loadPCDFile(map_location, *cloud_largemap);
 
