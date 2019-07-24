@@ -1,11 +1,11 @@
 <launch>
 	<node pkg="pointcloud_registration" type="scan_accumulation" name="icp_map" output="screen" >
-		<param name="odom_frame" value="iMiev/odom" />
-		<param name="base_frame" value="iMiev/base_link" />
-		<param name="map_frame" value="iMiev/map" />
+		<param name="odom_frame" value="odom" />
+		<param name="base_frame" value="base_link" />
+		<param name="map_frame" value="map" />
 		<param name="file_name" value="loam_testing" />
-		<param name="directory_name" value="/home/smaug/loam_testing" />
-		<param name="offline_mapping" value="true" />
+		<param name="directory_name" value="$(find pointcloud_registration)/map/loam_testing" />
+		<param name="offline_mapping" value="false" />
 	</node>
 
 	

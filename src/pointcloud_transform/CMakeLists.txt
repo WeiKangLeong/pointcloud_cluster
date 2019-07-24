@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   tf
   tf_conversions
+	pcl_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -120,7 +121,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+ include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -139,6 +140,8 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(transform_publisher src/transform_publisher.cpp)
 add_executable(launch_transform src/launch_transform.cpp)
+add_executable(pointcloud_readjust src/pointcloud_readjust.cpp)
+add_executable(pointcloud_combine src/pointcloud_combine.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -153,6 +156,8 @@ add_executable(launch_transform src/launch_transform.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(transform_publisher ${catkin_LIBRARIES})
 target_link_libraries(launch_transform ${catkin_LIBRARIES})
+target_link_libraries(pointcloud_readjust ${catkin_LIBRARIES})
+target_link_libraries(pointcloud_combine ${catkin_LIBRARIES})
 
 #############
 ## Install ##

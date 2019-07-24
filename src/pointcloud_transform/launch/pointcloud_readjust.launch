@@ -1,0 +1,67 @@
+<launch>
+
+	<node pkg="pointcloud_transform" type="pointcloud_readjust" name="top_readjust" output="screen" >
+		<param name="x" value="7.824" />
+		<param name="y" value="0.650" />
+		<param name="z" value="3.15" />
+		<param name="roll" value="-0.025" />
+		<param name="pitch" value="0.04" />
+		<param name="yaw" value="0.0" />
+		<param name="frame_id" value="base_link" />
+		<param name="cut_half" value="true" />
+		<remap from="velodyne_points" to="/velodyne_front/velodyne_points" />
+		<remap from="transform_points" to="top_front_points" />
+	</node>
+
+	<node pkg="pointcloud_transform" type="pointcloud_readjust" name="rear_readjust" output="screen" >
+		<param name="x" value="-3.0" />
+		<param name="y" value="-0.65" />
+		<param name="z" value="3.15" />
+		<param name="roll" value="-0.02" />
+		<param name="pitch" value="0.0" />
+		<param name="yaw" value="3.1412596" />
+		<param name="cut_half" value="false" />
+		<param name="frame_id" value="base_link" />
+		<remap from="velodyne_points" to="/velodyne_back/velodyne_points" />
+		<remap from="transform_points" to="top_rear_points" />
+	</node>
+
+	<node pkg="pointcloud_transform" type="pointcloud_readjust" name="center_readjust" output="screen" >
+		<param name="x" value="8.7" />
+		<param name="y" value="0.0" />
+		<param name="z" value="1.15" />
+		<param name="roll" value="0.0" />
+		<param name="pitch" value="0.175" />
+		<param name="yaw" value="0.0" />
+		<param name="cut_half" value="false" />
+		<param name="frame_id" value="base_link" />
+		<remap from="velodyne_points" to="/velodyne_center/velodyne_points" />
+		<remap from="transform_points" to="center_points" />
+	</node>
+
+	<node pkg="pointcloud_transform" type="pointcloud_combine" name="combine" output="screen" >
+		<remap from="top_front_points" to="top_front_points" />
+		<remap from="top_rear_points" to="top_rear_points" />
+	</node>
+
+	<node pkg="pointcloud_filter" type="pointcloud_filter_passthrough" name="filter_inside">
+		<remap from="input" to="top_front_points" />
+		<remap from="output" to="filter_points" />
+		<param name="filter_inside" value="true" />
+		<param name="filter_outside" value="false" />
+		<param name="filter_size" value="1.0" />
+
+		<param name="filter_height" value="false" />
+		<param name="filter_upper_z" value="1.0" />
+		<param name="filter_lower_z" value="-1.0" />
+	</node>
+
+	<!--<node pkg="pointcloud_filter" type="pointcloud_visualize_normal" name="visualize_center" output="screen">
+		<remap from="cloud_in" to="center_points" />
+		<param name="view_point_x" value="8.7" />
+		<param name="view_point_y" value="0.0" />
+		<param name="view_point_z" value="1.15" />
+	</node>-->
+
+
+</launch>

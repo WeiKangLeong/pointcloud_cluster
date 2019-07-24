@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(pointcloud_filter)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+#add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -26,8 +26,17 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(OpenCV REQUIRED)
+
+#set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}; /home/locmodv2/Downloads/pcl-pcl-1.7.2/build" )
+find_package(PCL REQUIRED)
+
+include_directories(${PCL_INCLUDE_DIRS})
+#link_directories(${PCL_LIBRARY_DIRS})
+#add_definitions(${PCL_DEFINITIONS})
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+
+
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -117,7 +126,7 @@ find_package(OpenCV REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES pointcloud_filter_mask
+#  LIBRARIES on_nurbs
   CATKIN_DEPENDS geometry_msgs nav_msgs pcl_conversions pcl_ros roscpp rospy sensor_msgs std_msgs tf tf_conversions visualization_msgs cv_bridge image_transport message_filters
   DEPENDS OpenCV
 #  DEPENDS system_lib
@@ -131,13 +140,29 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
  ../../include
-  ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS}
+  include
+  include/pcl
+  #ON_NURBS_INCLUDES
+  ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/pointcloud_filter_mask.cpp
 # )
+
+
+
+#set(ON_NURBS_SOURCES ${ON_NURBS_SOURCES} src/on_nurbs/nurbs_solve_umfpack.cpp)
+#set(ON_NURBS_LIBRARIES ${ON_NURBS_LIBRARIES} cholmod umfpack)
+
+
+#add_library(on_nurbs
+#	${ON_NURBS_SOURCES}
+#	${OPENNURBS_SOURCES}
+#)
+
+#target_link_libraries(on_nurbs ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -159,6 +184,8 @@ add_executable(pointcloud_filter_vertical_feature src/pointcloud_filter_vertical
 add_executable(pointcloud_grid_clustering src/pointcloud_grid_clustering.cpp)
 add_executable(pointcloud_position_clustering src/pointcloud_position_clustering.cpp)
 add_executable(pointcloud_cluster_with_mask src/pointcloud_cluster_with_mask.cpp)
+add_executable(pointcloud_search_curve src/pointcloud_search_curve.cpp)
+add_executable(pointcloud_visualize_normal src/pointcloud_visualize_normal.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -183,4 +210,6 @@ target_link_libraries(pointcloud_filter_vertical_feature ${catkin_LIBRARIES})
 target_link_libraries(pointcloud_grid_clustering ${catkin_LIBRARIES})
 target_link_libraries(pointcloud_position_clustering ${catkin_LIBRARIES})
 target_link_libraries(pointcloud_cluster_with_mask ${catkin_LIBRARIES})
+target_link_libraries(pointcloud_search_curve ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+target_link_libraries(pointcloud_visualize_normal ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 

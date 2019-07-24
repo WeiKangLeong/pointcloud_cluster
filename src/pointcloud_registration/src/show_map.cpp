@@ -23,16 +23,16 @@
 #include <pcl/common/geometry.h>
 #include <visualization_msgs/Marker.h>
 
-#include <opencv2/opencv.hpp>
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
+//#include <opencv2/opencv.hpp>
+//#include <image_transport/image_transport.h>
+//#include <cv_bridge/cv_bridge.h>
+//#include <sensor_msgs/image_encodings.h>
+//#include <opencv2/imgproc/imgproc.hpp>
+//#include <opencv2/highgui/highgui.hpp>
 
 ros::Publisher pub, pub_cylinder, pub_full_map;
 
-using namespace cv;
+//using namespace cv;
 
 int
 main (int argc, char** argv)
@@ -85,7 +85,7 @@ main (int argc, char** argv)
     int sum_size=0;
     //std::cout<<cloud_in->size()<<std::endl;
 
-    sensor_msgs::Image pt_image;
+//    sensor_msgs::Image pt_image;
 
     if (cloud_in->size()<4000000)
     {

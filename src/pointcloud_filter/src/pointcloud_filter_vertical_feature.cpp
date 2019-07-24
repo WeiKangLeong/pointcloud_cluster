@@ -103,21 +103,34 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
     pcl_ros::transformPointCloud(*cloud_gridmap, *cloud_gridmap, shift_back_cloud);
 
-    tf::StampedTransform align_baselink;
+    sensor_msgs::PointCloud2 outputn;
 
-    try{
-        tf_listener_->lookupTransform(base_frame_, input->header.frame_id, ros::Time(0), align_baselink);
-    }catch (tf::TransformException &ex) {
-        ROS_ERROR("Lookup transform for %s and %s failed", base_frame_.c_str(), input->header.frame_id.c_str());
-        return;
+    if (base_frame_==" ")
+    {
+        pcl::toROSMsg (*cloud_gridmap, outputn);
+        outputn.header = input->header;
+    }
+    else
+    {
+        tf::StampedTransform align_baselink;
+
+        try{
+            tf_listener_->lookupTransform(base_frame_, input->header.frame_id, ros::Time(0), align_baselink);
+        }catch (tf::TransformException &ex) {
+            ROS_ERROR("Lookup transform for %s and %s failed", base_frame_.c_str(), input->header.frame_id.c_str());
+            return;
+        }
+
+        pcl_ros::transformPointCloud(*cloud_gridmap, *cloud_gridmap, align_baselink);
+
+        pcl::toROSMsg (*cloud_gridmap, outputn);
+        outputn.header.stamp = input->header.stamp;
+        outputn.header.frame_id = base_frame_;
     }
 
-    pcl_ros::transformPointCloud(*cloud_gridmap, *cloud_gridmap, align_baselink);
 
-    sensor_msgs::PointCloud2 outputn, outputm;
-    pcl::toROSMsg (*cloud_gridmap, outputn);
-    outputn.header.stamp = input->header.stamp;
-    outputn.header.frame_id = base_frame_;
+
+
     pub.publish (outputn);
 
 //    pcl::toROSMsg (*cloud_in, outputm);
@@ -143,6 +156,7 @@ main (int argc, char** argv)
 
     filter_radius_ = 50.0;
     repeat_ =true;
+    base_frame_=" ";
 
     priv_nh.getParam("filter_radius", filter_radius_);
     priv_nh.getParam("base_frame", base_frame_);

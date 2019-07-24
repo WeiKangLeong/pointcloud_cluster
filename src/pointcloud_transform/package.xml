@@ -71,6 +71,10 @@
   <exec_depend>tf</exec_depend>
   <exec_depend>tf_conversions</exec_depend>
 
+ <build_depend>pointcloud_readjust</build_depend>
+ <build_export_depend>pointcloud_readjust</build_export_depend>
+  <exec_depend>pointcloud_readjust</exec_depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -1,14 +1,42 @@
 <?xml version="1.0"?>
 
 <launch>
-	<node pkg="pointcloud_filter" type="pointcloud_filter_passthrough" name="filter_inside">
-		<remap from="input" to="rslidar_points" />
-		<remap from="output" to="filter_points" />
+	<!--<node pkg="pointcloud_filter" type="pointcloud_filter_passthrough" name="filter_topfront">
+		<remap from="input" to="/velodyne_front/velodyne_points" />
+		<remap from="output" to="front_points" />
 		<param name="filter_inside" value="true" />
 		<param name="filter_outside" value="false" />
 		<param name="filter_size" value="1.0" />
-	</node>
 
+		<param name="filter_height" value="false" />
+		<param name="filter_upper_z" value="1.0" />
+		<param name="filter_lower_z" value="-1.0" />
+
+		<param name="filter_upper_x" value="0.1" />
+		<param name="filter_lower_x" value="-8.0" />
+
+		<param name="filter_upper_y" value="1.0" />
+		<param name="filter_lower_y" value="-3.0" />
+	</node>-->
+
+	<node pkg="pointcloud_filter" type="pointcloud_filter_passthrough" name="filter_toprear">
+		<remap from="input" to="/velodyne_back/velodyne_points" />
+		<remap from="output" to="rear_points" />
+		<param name="filter_inside" value="true" />
+		<param name="filter_outside" value="false" />
+		<param name="filter_combine" value="true" />
+		<param name="filter_size" value="1.0" />
+
+		<param name="filter_height" value="false" />
+		<param name="filter_upper_z" value="1.0" />
+		<param name="filter_lower_z" value="-1.0" />
+
+		<param name="filter_upper_x" value="0.1" />
+		<param name="filter_lower_x" value="-8.0" />
+
+		<param name="filter_upper_y" value="1.0" />
+		<param name="filter_lower_y" value="-3.0" />
+	</node>
   
 
 </launch>

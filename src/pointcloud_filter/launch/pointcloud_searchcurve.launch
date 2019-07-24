@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<launch>
+  
+
+  <node pkg="pointcloud_filter" type="pointcloud_search_curve" name="search_curve" output="screen">
+    <remap from="transform_points" to="safety_3d_points" />
+    <param name="pose_location" value="/home/locmodv2/weikang_ws/src/st_map_function/map/test_folder/2019-4-29-9-34-47-debug-SPA-0.0050-0.0005-0.95/ptcloud_spa.dat" />
+	<param name="resolution" value="0.2" />
+	<param name = "map" value = "false" />
+	
+    
+  </node>
+  
+
+</launch>

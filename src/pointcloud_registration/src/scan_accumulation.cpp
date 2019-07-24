@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include <std_msgs/Bool.h>
 // for pose relation in gtsam
 #include <std_msgs/Int16MultiArray.h>
 
@@ -56,6 +57,8 @@ tf::Transform transform, offset_transform, now_odom_transform, difference, prev_
 
 nav_msgs::Path stored_odometry;
 
+geometry_msgs::PoseWithCovarianceStamped stored_gps;
+
 Eigen::Matrix4f use_odom;
 
 std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr>* pcl_node;
@@ -78,6 +81,12 @@ using namespace visualization_msgs;
 // %Tag(vars)%
 boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
 // %EndTag(vars)%
+
+
+void gps_pose_cb (geometry_msgs::PoseWithCovarianceStamped gps_input)
+{
+    stored_gps = gps_input;
+}
 
 tf::Transform OdomToTF(nav_msgs::Odometry odom)
 {
@@ -345,9 +354,13 @@ void pcl_and_pose_cb(const sensor_msgs::PointCloud2ConstPtr input, const nav_msg
     std::string save_odom;
     save_odom = directory_name_+"/odom.txt";
 
+    //myfile.open (save_odom.c_str());
+
     myfile<<after_map_odom->pose.pose.position.x<<" "<<after_map_odom->pose.pose.position.y<<" "<<after_map_odom->pose.pose.position.z<<
             " "<<after_map_odom->pose.pose.orientation.x<<" "<<after_map_odom->pose.pose.orientation.y<<" "<<
             after_map_odom->pose.pose.orientation.z<<" "<<after_map_odom->pose.pose.orientation.w<<"\n";
+
+    //myfile.close();
 
     geometry_msgs::PoseStamped pcl_odom;
 
@@ -534,6 +547,12 @@ void pose_refine_cb (nav_msgs::Path refined_odom)
 
 }
 
+void save_odom_cb (std_msgs::Bool save)
+{
+    std::cout<<"save odom "<<save<<std::endl;
+    myfile.close();
+}
+
 int
 main (int argc, char** argv)
 {
@@ -555,6 +574,10 @@ main (int argc, char** argv)
 
 //    ros::Subscriber sub_pcl = nh.subscribe <sensor_msgs::PointCloud2> ("laser_cloud_surround", 1, pc_cb);
 //    ros::Subscriber sub_pose = nh.subscribe <nav_msgs::Odometry> ("aft_mapped_to_init", 1, store_pose_cb);
+
+    ros::Subscriber sub_gps_pose = nh.subscribe <geometry_msgs::PoseWithCovarianceStamped> ("gps_pose", 1, gps_pose_cb);
+
+    ros::Subscriber sub_save_odom = nh.subscribe <std_msgs::Bool> ("save_odom", 1, save_odom_cb);
 
     ros::Subscriber sub_refine_pose = nh.subscribe <nav_msgs::Path> ("final_pose", 1, pose_refine_cb);
     message_filters::Subscriber<sensor_msgs::PointCloud2> pcl_sub(nh, "velodyne_cloud_registered", 1);

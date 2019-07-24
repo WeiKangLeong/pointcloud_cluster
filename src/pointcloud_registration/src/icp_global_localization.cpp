@@ -40,7 +40,7 @@
 #include <pcl/console/time.h>   // TicToc
 #include <pcl/common/common.h>
 
-#include "include/grid.h"
+#include "grid.h"
 
 Grid * grid_scan;
 Grid * grid_map;
@@ -94,7 +94,8 @@ bool indoor=false;
 
 int danger,chance;
 
-std::string base_frame_id_, global_frame_id_, odom_frame_id_, map_location, file_location, filter_radius_;
+std::string base_frame_id_, global_frame_id_, odom_frame_id_, map_location, file_location;
+double filter_radius_;
 
 void write_to_file(double p_x, double p_y, int degree, double score)
 {
@@ -448,7 +449,7 @@ int main(int argc, char** argv)
         priv_nh.getParam("odom_frame_id", odom_frame_id_);
 	priv_nh.getParam("filter_radius", filter_radius_);
 
-        myfile.open ("/home/weikang/weikang_ws/src/pointcloud_cluster/src/pointcloud_registration/map/kidnap_pose.txt");
+        myfile.open ("~/weikang_ws/src/pointcloud_cluster/src/pointcloud_registration/map/kidnap_pose.txt");
         myfile<<"pose_x pose_y degree score\n";
 
         icp.setMaximumIterations (5);
@@ -469,8 +470,8 @@ int main(int argc, char** argv)
 
     result = 100.0;
 	
-	grid_map = new Grid(filter_radius_*2, filter_radius_*2, 0, RES, 0.0, 0.0);
-	grid_scan = new Grid(filter_radius_*2, filter_radius_*2, 0, RES, 0.0, 0.0);
+    grid_map = new Grid(filter_radius_*2, filter_radius_*2, 0, 0.1, 0.0, 0.0);
+    grid_scan = new Grid(filter_radius_*2, filter_radius_*2, 0, 0.1, 0.0, 0.0);
 
     pcl::io::loadPCDFile(map_location, *cloud_largemap);
 

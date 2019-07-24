@@ -1,0 +1,7 @@
+<launch>
+    
+    <node pkg="pointcloud_registration" type="show_text_map" name="show_text_map" output="screen">
+		<param name="map_location" value="/home/locmodv2/Downloads/LAStools/bin/lidar.txt" />
+		<param name="global_frame_id" value="map" />
+	</node>
+</launch>

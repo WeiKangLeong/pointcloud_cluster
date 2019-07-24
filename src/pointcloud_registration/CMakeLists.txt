@@ -134,7 +134,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+ ../../include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
@@ -169,7 +169,10 @@ add_executable (scan_accumulation src/scan_accumulation.cpp)
 target_link_libraries (scan_accumulation ${catkin_LIBRARIES})
 add_executable (grid_map_registration src/grid_map_registration.cpp)
 target_link_libraries (grid_map_registration ${catkin_LIBRARIES})
-
+add_executable (show_text_map src/show_text_map.cpp)
+target_link_libraries (show_text_map ${catkin_LIBRARIES})
+add_executable (lidar_calibrate_withmap src/lidar_calibrate_withmap.cpp)
+target_link_libraries (lidar_calibrate_withmap ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

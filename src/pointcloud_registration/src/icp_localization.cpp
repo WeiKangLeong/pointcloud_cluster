@@ -284,7 +284,7 @@ void pointcloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
         pass.setInputCloud (cloud_in);
         pass.setFilterFieldName ("x");
         //pass.setFilterLimits (-30.0+now_transform.x(), 30.0+now_transform.x());
-        pass.setFilterLimits (0.0, 30.0);
+        pass.setFilterLimits (-30.0, 30.0);
         //pass.setFilterLimitsNegative (true);
         pass.filter (*cloud_in);
 
