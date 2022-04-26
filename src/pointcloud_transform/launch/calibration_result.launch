@@ -1,0 +1,75 @@
+<launch>
+    <node pkg="pointcloud_transform" type="pointcloud_readjust" name="base_8374" output="screen" >
+		<param name="x" value="0.0" />
+		<param name="y" value="0.0" />
+		<param name="z" value="1.1704359" />
+		<param name="roll" value="0.041285387" />
+		<param name="pitch" value="-0.040013302" />
+		<param name="yaw" value="0.0" />
+		<param name="frame_id" value="base_link" />
+		<param name="cut_half" value="false" />
+		<remap from="velodyne_points" to="/8374/golfcart/left_rs/rslidar_points" />
+		<remap from="transform_points" to="/8374_left_rs" />
+		<!-- FOR MAINTENANCE BAY -->
+		<!-- <param name="x" value="0.0" />
+		<param name="y" value="0.0" />
+		<param name="z" value="1.2103106" />
+		<param name="roll" value="0.042220496" />
+		<param name="pitch" value="-0.045393191" />
+		<param name="yaw" value="0.0" />
+		<param name="frame_id" value="base_link" />
+		<param name="cut_half" value="false" />
+		<remap from="velodyne_points" to="/8374/golfcart/left_rs/rslidar_points" />
+		<remap from="transform_points" to="/8374_left_rs" /> -->
+	</node>
+
+	<node pkg="pointcloud_transform" type="pointcloud_readjust" name="follower_8330" output="screen" >
+		<param name="x" value="0.22400109" />
+		<param name="y" value="-0.3802571" />
+		<param name="z" value="1.1475039" />
+		<param name="roll" value="0.03616188" />
+		<param name="pitch" value="-0.00093052073" />
+		<param name="yaw" value="-0.56897734" />
+		<param name="cut_half" value="false" />
+		<param name="frame_id" value="base_link" />
+		<remap from="velodyne_points" to="/8330/golfcart/left_rs/rslidar_points" />
+		<remap from="transform_points" to="/8330_left_rs" />
+		<!-- <param name="x" value="-0.080147184" />
+		<param name="y" value="-0.040106762" />
+		<param name="z" value="1.184705" />
+		<param name="roll" value="0.039844639" />
+		<param name="pitch" value="-0.0081596958" />
+		<param name="yaw" value="-0.56723201" />
+		<param name="cut_half" value="false" />
+		<param name="frame_id" value="base_link" />
+		<remap from="velodyne_points" to="/8330/golfcart/left_rs/rslidar_points" />
+		<remap from="transform_points" to="/8330_left_rs" /> -->
+	</node>
+
+    <node pkg="pointcloud_transform" type="pointcloud_readjust" name="follower_8331" output="screen" >
+
+		<param name="x" value="0.00078860222" />
+		<param name="y" value="-0.12906109" />
+		<param name="z" value="1.1887524" />
+		<param name="roll" value="0.063931064" />
+		<param name="pitch" value="0.0023933798" />
+		<param name="yaw" value="-0.48171087" />
+		<param name="cut_half" value="false" />
+		<param name="frame_id" value="base_link" />
+		<remap from="velodyne_points" to="/8331/golfcart/left_rs/rslidar_points" />
+		<remap from="transform_points" to="/8331_left_rs" />
+		<!-- <param name="x" value="-0.1176279" />
+		<param name="y" value="-0.075873807" />
+		<param name="z" value="1.2169234" />
+		<param name="roll" value="0.066453196" />
+		<param name="pitch" value="-0.0079440998" />
+		<param name="yaw" value="-0.46425758" />
+		<param name="cut_half" value="false" />
+		<param name="frame_id" value="base_link" />
+		<remap from="velodyne_points" to="/8331/golfcart/left_rs/rslidar_points" />
+		<remap from="transform_points" to="/8331_left_rs" /> -->
+	</node>
+
+    <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find pointcloud_transform)/calibration_result.rviz" />
+
+</launch>

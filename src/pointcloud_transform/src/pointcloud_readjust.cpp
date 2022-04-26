@@ -71,6 +71,7 @@ void PCL_readjust::pointcloud_cb_ (const sensor_msgs::PointCloud2ConstPtr& input
 
     output.header = input->header;
     output.header.frame_id = frame_id_;
+    output.header.stamp = ros::Time::now();
 
     // Publish the data.
     pub_pcl_.publish (output);
